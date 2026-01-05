@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harminis AI</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            user-select: none;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls {
+            margin: 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        button.highlighted {
+            background: #2196F3;
+        }
+        .error {
+            padding: 10px;
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            margin: 10px 0;
+            border-radius: 4px;
+            color: #c62828;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .animal-supply {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .player-animals {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 0;
+        }
+        .animal-card-container {
+            position: relative;
+            display: inline-block;
+            border-radius: 6px;
+            background-color: #fff;
+            width: 110px;
+        }
+        .player-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .player-section.current-player {
+            border-left-color: #FF9800;
+            background: #fff3e0;
+        }
+        .player-header {
+            margin-top: 3px;
+            margin-bottom: 5px;
+        }
+        .score-display {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .score-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 13px;
+            color: #000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .score-circle.tree { background: #81C784; }
+        .score-circle.mountain { background: #BDBDBD; }
+        .score-circle.plains { background: #ffdc4f; }
+        .score-circle.building { background: #f03c00; }
+        .score-circle.water { background: #64B5F6; }
+        .score-circle.animal { background: #FFB74D; }
+        .score-circle.spirit { background: #FFFFFF; }
+        .score-circle.total {
+            background: #FFF;
+            border: 0;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            margin-left: 8px;
+        }
+        .player-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .player-board-area {
+            flex: 0 0 auto;
+        }
+        .player-animals-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .hex-board {
+            display: block;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            background: #e8e8e8;
+            border-radius: 8px;
+        }
+        .hex-cell {
+            width: 40px;
+            height: 35px;
+            margin: 0;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: absolute;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+        .hex-cell.empty {
+            background: #f5f5f5;
+            border-color: #ccc;
+        }
+        .hex-cell.river {
+            background: #4fc3f7;
+            border-color: #0277bd;
+        }
+        .hex-cell.plains {
+            background: #fff176;
+            border-color: #f9a825;
+        }
+        .hex-cell.wood {
+            background: #a1887f;
+            border-color: #5d4037;
+        }
+        .hex-cell.mountain {
+            background: #90a4ae;
+            border-color: #455a64;
+        }
+        .hex-cell.tree {
+            background: #81c784;
+            border-color: #2e7d32;
+        }
+        .hex-cell.building {
+            background: #e57373;
+            border-color: #c62828;
+        }
+        .hex-cell.finished-building {
+            background: #ef5350;
+            border-color: #b71c1c;
+        }
+        .hex-cell.mountain-2x {
+            background: #78909c;
+            border-color: #37474f;
+        }
+        .hex-cell.mountain-3x {
+            background: #607d8b;
+            border-color: #263238;
+        }
+        .hex-cell.tree-2x {
+            background: #66bb6a;
+            border-color: #1b5e20;
+        }
+        .hex-cell.tree-3x {
+            background: #4caf50;
+            border-color: #1b5e20;
+        }
+        .hex-cell.wood-2x {
+            background: #8d6e63;
+            border-color: #4e342e;
+        }
+        .hex-cell.has-animal::after {
+            font-family: emoji;
+            content: '🐾';
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            font-size: 15px;
+        }
+        .hex-cell.clickable {
+            cursor: pointer;
+            box-shadow: 0 0 0 3px #4CAF50;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        .hex-cell.clickable:hover {
+            box-shadow: 0 0 0 3px #45a049;
+            transform: scale(1.1);
+            z-index: 10;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 1.5px #4CAF50; }
+            50% { box-shadow: 0 0 0 2.5px #81c784; }
+        }
+        .token-circle.selectable {
+            cursor: pointer;
+            box-shadow: 0 0 0 1.5px #4CAF50;
+        }
+        .token-circle.selectable:hover {
+            box-shadow: 0 0 0 2.5px #45a049;
+            transform: scale(1.15);
+        }
+        .token-circle.selected {
+            box-shadow: 0 0 0 2.5px #FF9800;
+            animation: selected-pulse 1s ease-in-out infinite;
+        }
+        @keyframes selected-pulse {
+            0%, 100% { box-shadow: 0 0 0 1.5px #FF9800; }
+            50% { box-shadow: 0 0 0 2.5px #FFB74D; }
+        }
+        .supply-section {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            align-items: flex-start;
+        }
+        .supply-section > div {
+            flex: 1;
+            min-width: 300px;
+        }
+        .animal-supply {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .token-supply {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .token-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border: 1.5px solid #ddd;
+            transition: all 0.2s ease;
+        }
+        .token-group.chosen {
+            border-color: #FF9800;
+            background: #fff3e0;
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
+        }
+        .token-group.clickable {
+            cursor: pointer;
+            border-color: #4CAF50;
+        }
+        .token-group.clickable:hover {
+            background: #e8f5e9;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+            transform: translateY(-2px);
+        }
+        .animal-card-container.clickable {
+            cursor: pointer;
+            position: relative;
+        }
+        .animal-card-container.clickable::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 1.5px solid #4CAF50;
+            border-radius: 6px;
+            pointer-events: none;
+        }
+        .animal-card-container.clickable:hover::before {
+            border-color: #45a049;
+            box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
+        }
+        .animal-card-container.clickable:hover {
+            transform: translateY(-3px);
+            transition: transform 0.2s ease;
+        }
+        .animal-card-container.selectable {
+            cursor: pointer;
+            position: relative;
+        }
+        .animal-card-container.selectable::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 1.5px solid #2196F3;
+            border-radius: 6px;
+            pointer-events: none;
+            animation: pulse-animal-selectable 2s ease-in-out infinite;
+        }
+        .animal-card-container.selected::before {
+            border: 2px solid #FF9800;
+            animation: pulse-animal-selected 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse-animal-selectable {
+            0%, 100% { box-shadow: 0 0 1.5px rgba(33, 150, 243, 0.4); }
+            50% { box-shadow: 0 0 2.5px rgba(33, 150, 243, 0.8); }
+        }
+        @keyframes pulse-animal-selected {
+            0%, 100% { box-shadow: 0 0 1.5px rgba(255, 152, 0, 0.6); }
+            50% { box-shadow: 0 0 2.5px rgba(255, 152, 0, 1); }
+        }
+        .token-slots {
+            display: flex;
+            gap: 4px;
+        }
+        .token-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1.2px solid #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            background: #ddd;
+        }
+        .token-circle.empty-slot {
+            opacity: 0;
+        }
+        .token-circle.river {
+            background: #4fc3f7;
+            border-color: #0277bd;
+        }
+        .token-circle.plains {
+            background: #fff176;
+            border-color: #f9a825;
+        }
+        .token-circle.wood {
+            background: #a1887f;
+            border-color: #5d4037;
+        }
+        .token-circle.mountain {
+            background: #90a4ae;
+            border-color: #455a64;
+        }
+        .token-circle.tree {
+            background: #81c784;
+            border-color: #2e7d32;
+        }
+        .token-circle.building {
+            background: #e57373;
+            border-color: #c62828;
+        }
+        .token-circle.finished-building {
+            background: #ef5350;
+            border-color: #b71c1c;
+        }
+        .token-circle.mountain-2x {
+            background: #78909c;
+            border-color: #37474f;
+        }
+        .token-circle.mountain-3x {
+            background: #607d8b;
+            border-color: #263238;
+        }
+        .token-circle.tree-2x {
+            background: #66bb6a;
+            border-color: #1b5e20;
+        }
+        .token-circle.tree-3x {
+            background: #4caf50;
+            border-color: #1b5e20;
+        }
+        .token-circle.wood-2x {
+            background: #8d6e63;
+            border-color: #4e342e;
+        }
+        .animal-env {
+            width: 100px;
+            height: 50px;
+            display: block;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .env-token {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            position: absolute;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            border: 1px solid #999;
+        }
+        .env-token.empty {
+            background: transparent;
+            border: 1px dashed #ccc;
+        }
+        .env-token .paw {
+            position: absolute;
+            font-size: 8px;
+            font-family: emoji;
+            margin-top: -12px;
+            margin-left: 8px;
+        }
+        .animal-scores {
+            display: flex;
+            gap: 1px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .animal-score-badge {
+            padding: 4px 2px;
+            border-radius: 6px;
+            font-size: 12px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            min-width: 10px;
+            text-align: center;
+        }
+        .animal-score-badge.active {
+            background: #FF9800;
+            border-color: #FF9800;
+            box-shadow: 0 0 6px rgba(255,152,0,0.25);
+        }
+        .setup-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            gap: 30px;
+        }
+        .setup-form {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 8px;
+            border: 2px solid #4CAF50;
+            min-width: 400px;
+        }
+        .setup-form h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .setup-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        .setup-buttons button {
+            flex: 1;
+        }
+        button.secondary {
+            background: #757575;
+        }
+        button.secondary:hover {
+            background: #616161;
+        }
+        .endgame-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .endgame-popup {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            min-width: 400px;
+        }
+        .endgame-popup h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+            font-size: 24px;
+        }
+        .endgame-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .endgame-table th {
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 2px solid #333;
+            background: #f5f5f5;
+        }
+        .endgame-table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        .endgame-table tr:last-child td {
+            border-bottom: 2px solid #333;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .endgame-table .component-name {
+            text-align: left;
+            font-weight: bold;
+            color: #000;
+        }
+        .endgame-table .row-tree {
+            background: #81C784;
+        }
+        .endgame-table .row-mountain {
+            background: #BDBDBD;
+        }
+        .endgame-table .row-plains {
+            background: #ffdc4f;
+        }
+        .endgame-table .row-building {
+            background: #f03c00;
+        }
+        .endgame-table .row-water {
+            background: #64B5F6;
+        }
+        .endgame-table .row-animal {
+            background: #FFB74D;
+        }
+        .endgame-table .row-spirit {
+            background: #FFFFFF;
+        }
+        .endgame-table .row-total {
+            background: #f5f5f5;
+        }
+        .winner-crown {
+            font-family: emoji;
+            margin-left: 4px;
+        }
+        .endgame-close {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">        
+        <div id="loading" class="loading">
+            <p>Loading WASM module...</p>
+        </div>
+        
+        <div id="app-setup" style="display: none;">
+            <div class="setup-screen">
+                <div class="setup-form">
+                    <h2>Game setup</h2>
+                    <div class="form-group">
+                        <label for="setup-seed">Seed</label>
+                        <input type="number" id="setup-seed" placeholder="Random">
+                    </div>
+                    <div class="form-group">
+                        <label for="setup-player-count">Number of players</label>
+                        <select id="setup-player-count">
+                            <option value="2" selected>2 Players</option>
+                            <option value="3">3 Players</option>
+                            <option value="4">4 Players</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="setup-board-variant">Board variant</label>
+                        <select id="setup-board-variant">
+                            <option value="0" selected>River</option>
+                            <option value="1">Islands</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="setup-use-spirits">Use spirits</label>
+                        <select id="setup-use-spirits">
+                            <option value="1" selected>Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
+                    <div class="setup-buttons">
+                        <button id="start-new-game">Start new game</button>
+                        <button id="back-to-board" class="secondary">Back to board</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="app" style="display: none;">
+            <div class="controls">
+                <button id="exit-to-setup" class="secondary">Exit</button>
+                <button id="ai-move" style="display: inline">AI Move</button>
+                <button id="end-turn" disabled>End turn</button>
+                <button id="undo" disabled>Undo</button>
+                <button id="show-score" style="display: none;">Score</button>
+            </div>
+                        
+            <div class="supply-section">
+                <div>
+                    <div class="token-supply" id="token-supply"></div>
+                </div>
+                <div>
+                    <div class="animal-supply" id="animal-supply"></div>
+                </div>
+            </div>
+            
+            <div id="players-display"></div>
+        </div>
+        
+        <div id="error" style="display: none;" class="error"></div>
+    </div>
+
+    <script src="harminies.js"></script>
+    <script src="harminies-wrapper.js"></script>
+    <script>
+        let game;
+        
+        // UI state for two-step token placement
+        let selectedTokenInfo = null; // { tokenIndex, availableActions }
+        
+        // UI state for two-step animal placement
+        let selectedAnimalInfo = null; // { animalSlot, availableActions }
+        
+        // Token type to CSS class mapping
+        const tokenClasses = [
+            'empty',           // 0
+            'river',           // 1
+            'plains',          // 2
+            'wood',            // 3
+            'mountain',        // 4
+            'tree',            // 5
+            'building',        // 6
+            'finished-building', // 7
+            'mountain-2x',     // 8
+            'mountain-3x',     // 9
+            'tree-2x',         // 10
+            'tree-3x',         // 11
+            'wood-2x'          // 12
+        ];
+        
+        const tokenSymbols = [
+            '',    // 0 empty
+            '川',  // 1 river
+            '田',  // 2 plains
+            '材',  // 3 wood
+            '山',  // 4 mountain
+            '木',  // 5 tree
+            '石',  // 6 building
+            '館',  // 7 finished building
+            '屾',  // 8 2x mountain
+            '嶽',  // 9 3x mountain
+            '林',  // 10 2x tree
+            '森',  // 11 3x tree
+            '板'   // 12 2x wood
+        ];
+        
+        function createHexBoard(board, clickableCells = null, playerIdx = null) {
+            const boardDiv = document.createElement('div');
+            const boardVariant = game.boardVariant;
+            
+            const colSizes = boardVariant ? [4, 3, 4, 3, 4, 3, 4] : [5, 4, 5, 4, 5];
+
+            boardDiv.className = 'hex-board';
+            boardDiv.style.width = 10 + 33 * colSizes.length + 7 + 'px';
+            boardDiv.style.height = 10 + 38 * Math.max(...colSizes) + 'px';
+
+            let cellIndex = 0;            
+            for (let col = 0; col < colSizes.length; col++) {
+                for (let row = 0; row < colSizes[col]; row++) {
+                    
+                    const cell = document.createElement('div');
+                    cell.style.top = row * 38 + col % 2 * 19 + 5 + 'px';
+                    cell.style.left = (col * 33) + 5 + 'px';
+                    const tokenValue = board[cellIndex];
+                    const tokenType = tokenValue & 0x0F; // TOKEN_MASK = 15
+                    const hasAnimal = (tokenValue & 0x10) !== 0; // TOKEN_ANIMAL = 16
+                    
+                    cell.className = 'hex-cell ' + tokenClasses[tokenType];
+                    if (hasAnimal) cell.classList.add('has-animal');
+                    
+                    // Check if this cell is clickable for token or animal placement
+                    if (clickableCells && clickableCells[cellIndex]) {
+                        cell.classList.add('clickable');
+                        const actionToExecute = clickableCells[cellIndex];
+                        cell.onclick = () => {
+                            executeAction(actionToExecute);
+                            clearTokenSelection();
+                            clearAnimalSelection();
+                        };
+                        cell.style.cursor = 'pointer';
+                    }
+                    
+                    cell.textContent = tokenSymbols[tokenType];
+                    cellIndex++;
+                    
+                    boardDiv.appendChild(cell);
+                }                
+            }
+            
+            return boardDiv;
+        }
+        
+        function createTokenSupply(tokenSupply, roundState, availableActions, currentPlayer = 0) {
+            const supplyDiv = document.createElement('div');
+            supplyDiv.className = 'token-supply';
+            
+            // Check if tokens have been chosen (4th bit set)
+            const tokensChosen = (roundState & 0x08) !== 0;
+            const chosenGroup = roundState & 0x07; // lowest 3 bits
+            
+            // Only allow interaction for player 0
+            const allowInteraction = (currentPlayer === 0);
+            
+            // Find CHOOSE_TOKENS actions
+            const chooseTokenActions = availableActions.filter(action => {
+                const type = (action >> 8) & 0xFF;
+                return type === 1; // ACTION_CHOOSE_TOKENS
+            });
+            
+            // Find PLACE_TOKEN actions
+            const placeTokenActions = availableActions.filter(action => {
+                const type = (action >> 8) & 0xFF;
+                return type === 2; // ACTION_PLACE_TOKEN
+            });
+            
+            for (let group = 0; group < 5; group++) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'token-group';
+                
+                // Highlight if this group is chosen
+                if (tokensChosen && group === chosenGroup) {
+                    groupDiv.classList.add('chosen');
+                }
+                
+                // Make clickable if there's a CHOOSE_TOKENS action for this group (only for player 0)
+                const actionForThisGroup = chooseTokenActions.find(action => {
+                    const params = action & 0xFF;
+                    return params === group;
+                });
+                
+                if (actionForThisGroup && allowInteraction) {
+                    groupDiv.classList.add('clickable');
+                    groupDiv.onclick = () => executeAction(actionForThisGroup);
+                    groupDiv.title = `Click to choose this token group`;
+                }
+                
+                const slotsDiv = document.createElement('div');
+                slotsDiv.className = 'token-slots';
+                
+                for (let slot = 0; slot < 3; slot++) {
+                    const circle = document.createElement('div');
+                    const tokenValue = tokenSupply[group][slot];
+                    
+                    if (tokenValue === null || tokenValue < 0) {
+                        circle.className = 'token-circle empty-slot';
+                    } else {
+                        const tokenType = tokenValue & 0x0F;
+                        circle.className = 'token-circle ' + tokenClasses[tokenType];
+                        circle.textContent = tokenSymbols[tokenType];
+                        circle.title = tokenClasses[tokenType];
+                        
+                        // Find PLACE_TOKEN actions for this specific token
+                        const actionsForThisToken = placeTokenActions.filter(action => {
+                            const params = action & 0xFF;
+                            const tokenIdx = (params >> 5) & 0x7;
+                            return tokenIdx === slot;
+                        });
+                        
+                        if (actionsForThisToken.length > 0 && tokensChosen && group === chosenGroup && allowInteraction) {
+                            circle.classList.add('selectable');
+                            
+                            // Check if this token is currently selected
+                            if (selectedTokenInfo && selectedTokenInfo.tokenIndex === slot) {
+                                circle.classList.add('selected');
+                            }
+                            
+                            circle.onclick = () => {
+                                selectToken(slot, actionsForThisToken);
+                            };
+                            circle.title += ' - Click to select for placement';
+                        }
+                    }
+                    
+                    slotsDiv.appendChild(circle);
+                }
+                
+                groupDiv.appendChild(slotsDiv);
+                supplyDiv.appendChild(groupDiv);
+            }
+            
+            return supplyDiv;
+        }
+        
+        function saveUIState(screen) {
+            try {
+                localStorage.setItem('harminis_ui_screen', screen);
+            } catch (e) {
+                console.error('Failed to save UI state:', e);
+            }
+        }
+        
+        function loadUIState() {
+            try {
+                return localStorage.getItem('harminis_ui_screen') || 'setup';
+            } catch (e) {
+                console.error('Failed to load UI state:', e);
+                return 'setup';
+            }
+        }
+        
+        function saveSetupInputs(seed, playerCount, boardVariant, useSpirits) {
+            try {
+                localStorage.setItem('harminis_setup_seed', seed.toString());
+                localStorage.setItem('harminis_setup_playercount', playerCount.toString());
+                localStorage.setItem('harminis_setup_boardvariant', boardVariant.toString());
+                localStorage.setItem('harminis_setup_usespirits', useSpirits.toString());
+            } catch (e) {
+                console.error('Failed to save setup inputs:', e);
+            }
+        }
+        
+        function loadSetupInputs() {
+            try {
+                const seed = localStorage.getItem('harminis_setup_seed');
+                const playerCount = localStorage.getItem('harminis_setup_playercount');
+                const boardVariant = localStorage.getItem('harminis_setup_boardvariant');
+                const useSpirits = localStorage.getItem('harminis_setup_usespirits');
+                
+                if (seed) {
+                    document.getElementById('setup-seed').value = seed;
+                }
+                if (playerCount) {
+                    document.getElementById('setup-player-count').value = playerCount;
+                }
+                if (boardVariant !== null) {
+                    document.getElementById('setup-board-variant').value = boardVariant;
+                }
+                if (useSpirits !== null) {
+                    document.getElementById('setup-use-spirits').value = useSpirits;
+                }
+            } catch (e) {
+                console.error('Failed to load setup inputs:', e);
+            }
+        }
+        
+        function showSetupScreen() {
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('app-setup').style.display = 'block';
+            saveUIState('setup');
+        }
+        
+        function showGameBoard() {
+            document.getElementById('app-setup').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            saveUIState('game');
+        }
+        
+        async function initWasm() {
+            try {
+                const module = await HarminiesModule();
+                game = new HarminiesGame(module);
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                // Load saved setup inputs
+                loadSetupInputs();
+                
+                // Check if there's a saved game
+                const hasSavedGame = game.loadFromStorage();
+                const savedScreen = loadUIState();
+                
+                if (hasSavedGame && savedScreen === 'game') {
+                    // Show the game board with loaded game
+                    showGameBoard();
+                    updateDisplay();
+                } else {
+                    // Show setup screen for new game
+                    showSetupScreen();
+                }
+                
+                console.log('WASM module loaded successfully');
+            } catch (error) {
+                showError('Failed to load WASM module: ' + error.message);
+                console.error('WASM load error:', error);
+            }
+        }
+        
+        function selectToken(tokenIndex, availableActions) {
+            selectedTokenInfo = { tokenIndex, availableActions };
+            updateDisplay();
+        }
+        
+        function clearTokenSelection() {
+            selectedTokenInfo = null;
+            updateDisplay();
+        }
+        
+        function selectAnimal(animalSlot, availableActions) {
+            selectedAnimalInfo = { animalSlot, availableActions };
+            updateDisplay();
+        }
+        
+        function clearAnimalSelection() {
+            selectedAnimalInfo = null;
+            updateDisplay();
+        }
+        
+        function createAnimalCard(animalId, progress = null, clickAction = null) {
+            const container = document.createElement('div');
+            container.className = 'animal-card-container';
+            
+            if (clickAction !== null) {
+                container.classList.add('clickable');
+                container.onclick = () => {
+                    clearTokenSelection();
+                    clearAnimalSelection();
+                    executeAction(clickAction);
+                };
+                container.title = 'Click to choose this animal';
+            }            
+            
+            // Add environment display above scores
+            const animalInfo = game.getAnimal(animalId);
+            const scores = animalInfo.score;
+            const animalToken = animalInfo.token;
+            const animalEnv = animalInfo.env;
+            
+            // Create environment visualization
+            const envContainer = document.createElement('div');
+            envContainer.className = 'animal-env';
+            
+            // Create a map of positions to tokens
+            const envMap = { 2: {tokenType: animalToken, x: 40, y: 22 } };
+            animalEnv.forEach(item => envMap[item.pos] = {
+                tokenType: item.token,
+                x: item.pos % 4 * 20,
+                y: (item.pos > 3 ? 22 : 0) + item.pos % 4 * 11,
+            });
+            const minX = Math.min(...Object.values(envMap).map(e => e.x));
+            const minY = Math.min(...Object.values(envMap).map(e => e.y));
+            const maxX = Math.max(...Object.values(envMap).map(e => e.x));
+            const maxY = Math.max(...Object.values(envMap).map(e => e.y));
+            const offsetX = -minX + (110 - (maxX - minX + 20)) / 2;
+            const offsetY = -minY + (50 - (maxY - minY + 20)) / 2;
+            
+            // First row: A B C D
+            for (let pos = 0; pos < 7; pos++) {
+                if (!envMap[pos]) continue;
+                const { tokenType, x, y } = envMap[pos];
+                const circle = document.createElement('div');
+                circle.style.top = y + offsetY + 'px';
+                circle.style.left = x + offsetX + 'px';
+                circle.className = tokenType !== undefined && tokenType >= 0 
+                    ? 'env-token token-circle ' + tokenClasses[tokenType]
+                    : 'env-token empty';
+                
+                circle.textContent = tokenSymbols[tokenType];
+                
+                // Add animal paw for center position
+                if (pos === 2) {
+                    circle.style.position = 'relative';
+                    const paw = document.createElement('span');
+                    paw.className = 'paw';
+                    paw.textContent = '🐾';
+                    circle.appendChild(paw);
+                }
+                
+                envContainer.appendChild(circle);
+            };
+            container.appendChild(envContainer);
+            
+            // Add score badges under the environment
+            if (typeof scores[0] === 'string') {
+                const scoresRow = document.createElement('div');
+                scoresRow.className = 'animal-scores';
+
+                const badge = document.createElement('div');
+                badge.className = 'animal-score-badge';
+                if (progress) badge.classList.add('active');
+
+                scores.forEach((s) => {
+                    if (s.startsWith('$')) {
+                        const num = parseInt(s.slice(1), 10);
+                        if (!Number.isNaN(num) && num >= 0 && num < tokenClasses.length) {
+                            const tokenEl = document.createElement('span');
+                            tokenEl.className = `token-circle ${tokenClasses[num]}`;
+                            // compact inline token styling for badge
+                            tokenEl.style.display = 'inline-flex';
+                            tokenEl.style.width = '15px';
+                            tokenEl.style.height = '15px';
+                            tokenEl.style.fontSize = '10px';
+                            tokenEl.style.margin = '0 3px';
+                            tokenEl.style.borderWidth = '1px';
+                            tokenEl.textContent = tokenSymbols[num] || '';
+                            badge.appendChild(tokenEl);
+                        } else {
+                            badge.appendChild(document.createTextNode(s));
+                        }
+                    } else {
+                        badge.appendChild(document.createTextNode(s));
+                    }
+                });
+
+                scoresRow.appendChild(badge);
+                container.appendChild(scoresRow);
+            } else {
+                const scoresRow = document.createElement('div');
+                scoresRow.className = 'animal-scores';
+                scores.forEach((s, i) => {
+                    const badge = document.createElement('div');
+                    badge.className = 'animal-score-badge';
+                    badge.textContent = s;
+                    if (progress && i < progress) {
+                        badge.classList.add('active');
+                    }
+                    scoresRow.appendChild(badge);
+                });
+                container.appendChild(scoresRow);
+            }
+            
+            return container;
+        }
+        
+        function updateDisplay() {
+            try {
+                const state = game.getState();
+                const currentPlayer = game.getCurrentPlayer();
+                
+                // Get available actions (used throughout)
+                const actions = game.getActions();
+                                                
+                // Find CHOOSE_ANIMAL actions
+                const chooseAnimalActions = actions.filter(action => {
+                    const type = (action >> 8) & 0xFF;
+                    return type === 3; // ACTION_CHOOSE_ANIMAL
+                });
+                
+                // Update animal supply
+                const animalSupplyDiv = document.getElementById('animal-supply');
+                animalSupplyDiv.innerHTML = '';
+                state.animals.forEach((animalId, idx) => {
+                    if (animalId !== null && animalId >= 0) {
+                        const actionForThisAnimal = (currentPlayer === 0) ? chooseAnimalActions.find(action => {
+                            const params = action & 0xFF;
+                            return params === idx;
+                        }) : null;
+                        animalSupplyDiv.appendChild(createAnimalCard(animalId, null, actionForThisAnimal || null));
+                    } else {
+                        // Empty slot
+                        const emptyDiv = document.createElement('div');
+                        emptyDiv.className = 'animal-card-container';
+                        animalSupplyDiv.appendChild(emptyDiv);
+                    }
+                });
+                
+                // Update token supply
+                const tokenSupplyDiv = document.getElementById('token-supply');
+                tokenSupplyDiv.innerHTML = '';
+                tokenSupplyDiv.appendChild(createTokenSupply(state.tokenSupply, state.roundState, actions, currentPlayer));
+                
+                // Update players display
+                const playersDiv = document.getElementById('players-display');
+                playersDiv.innerHTML = '';
+                state.players.forEach((player, idx) => {
+                    const playerSection = document.createElement('div');
+                    playerSection.className = 'player-section' + (idx === currentPlayer ? ' current-player' : '');
+                    
+                    const header = document.createElement('h3');
+                    header.textContent = `Player ${idx + 1}`;
+                    header.className = 'player-header';
+                    playerSection.appendChild(header);
+                    
+                    // Create score display with circles
+                    const scoreDiv = document.createElement('div');
+                    scoreDiv.className = 'score-display';
+                    const playerScore = game.getPlayerScore(idx);
+                    
+                    // Total score circle
+                    const totalCircle = document.createElement('div');
+                    totalCircle.className = 'score-circle total';
+                    totalCircle.textContent = playerScore.score;
+                    totalCircle.title = `Total Score: ${playerScore.score}`;
+                    scoreDiv.appendChild(totalCircle);
+
+                    // Score components with their colors (matching token colors)
+                    const scoreComponents = [
+                        { value: playerScore.trees, class: 'tree', title: 'Trees' },
+                        { value: playerScore.mountains, class: 'mountain', title: 'Mountains' },
+                        { value: playerScore.fields, class: 'plains', title: 'Fields' },
+                        { value: playerScore.buildings, class: 'building', title: 'Buildings' },
+                        { value: playerScore.water, class: 'water', title: 'Water' },
+                        { value: playerScore.animals, class: 'animal', title: 'Animals' },
+                    ];
+                    if (game.useSpirits) {
+                        scoreComponents.push({ value: playerScore.spirit, class: 'spirit', title: 'Spirit' });
+                    }
+                    
+                    scoreComponents.forEach(component => {
+                        const circle = document.createElement('div');
+                        circle.className = `score-circle ${component.class}`;
+                        circle.textContent = component.value > 0 ? component.value : '';
+                        circle.title = `${component.title}: ${component.value}`;
+                        scoreDiv.appendChild(circle);
+                    });
+                    
+                    
+                    header.appendChild(scoreDiv);
+                    
+                    const animalsDiv = document.createElement('div');
+                    animalsDiv.className = 'player-animals';
+                    
+                    // Filter PLACE_ANIMAL actions for this player (only current player can place, and only for player 0)
+                    const placeAnimalActions = (idx === currentPlayer && currentPlayer === 0) 
+                        ? actions.filter(action => (action >> 8) === 4) // ACTION_PLACE_ANIMAL = 4
+                        : [];
+                    const selectSpiritActions = (idx === currentPlayer && currentPlayer === 0) 
+                        ? actions.filter(action => (action >> 8) === 6) // ACTION_SELECT_SPIRIT = 6
+                        : [];
+                    const playerAnimals = game.getPlayerAnimals(idx).map(animalId => ({ animalId, slotIdx: player.animals.findIndex(a => a?.id === animalId) }));
+                    playerAnimals.sort((a, b) => ((a.slotIdx >= 0) ? 0 : 1) - ((b.slotIdx >= 0) ? 0 : 1));
+                    if (!playerAnimals.length) player.animals.forEach((animal, slotIdx) => {
+                        if (animal) playerAnimals.push({ animalId: animal.id, slotIdx });
+                    });
+                    playerAnimals.forEach(({ animalId, slotIdx }) => {
+                        const animal = slotIdx < 0 ? { id: animalId, progress: 99 } : player.animals[slotIdx];
+                        if (animal !== null && animal.id >= 0) {
+                            // Find PLACE_ANIMAL actions for this specific animal slot
+                            const actionsForThisAnimal = placeAnimalActions.filter(action => {
+                                const params = action & 0xFF;
+                                const animalSlot = (params >> 5) & 0x7;
+                                return animalSlot === slotIdx;
+                            });
+                            const spiritActionForThisAnimal = selectSpiritActions.find(action => (action & 1) === slotIdx);
+                            
+                            const card = createAnimalCard(animal.id, animal.progress);
+                            
+                            // Make selectable if there are placement actions for this animal (only for player 0)
+                            if (actionsForThisAnimal.length > 0) {
+                                card.classList.add('selectable');
+                                
+                                // Check if this animal is currently selected
+                                if (selectedAnimalInfo && selectedAnimalInfo.animalSlot === slotIdx) {
+                                    card.classList.add('selected');
+                                }
+                                
+                                card.onclick = () => {
+                                    selectAnimal(slotIdx, actionsForThisAnimal);
+                                };
+                                card.title = (card.title || '') + ' - Click to select for placement';
+                            }
+                            if (spiritActionForThisAnimal) {
+                                card.classList.add('selectable');
+                                card.onclick = () => {
+                                    clearTokenSelection();
+                                    clearAnimalSelection();
+                                    executeAction(spiritActionForThisAnimal);
+                                };
+                                card.title = (card.title || '') + ' - Click to select spirit';
+                            }
+                            
+                            animalsDiv.appendChild(card);
+                        }
+                    });
+                    
+                    // Create content container with board and animals side by side
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'player-content';
+                    
+                    // Board area
+                    const boardArea = document.createElement('div');
+                    boardArea.className = 'player-board-area';
+                    
+                    // Determine clickable cells if a token or animal is selected and this is the current player
+                    let clickableCells = null;
+                    if (selectedTokenInfo && idx === currentPlayer) {
+                        clickableCells = {};
+                        selectedTokenInfo.availableActions.forEach(action => {
+                            const params = action & 0xFF;
+                            const boardPos = params & 0x1F;
+                            clickableCells[boardPos] = action;
+                        });
+                    } else if (selectedAnimalInfo && idx === currentPlayer) {
+                        clickableCells = {};
+                        selectedAnimalInfo.availableActions.forEach(action => {
+                            const params = action & 0xFF;
+                            const boardPos = params & 0x1F;
+                            clickableCells[boardPos] = action;
+                        });
+                    }
+                    
+                    boardArea.appendChild(createHexBoard(player.board, clickableCells, idx));
+                    
+                    // Animals area
+                    const animalsArea = document.createElement('div');
+                    animalsArea.className = 'player-animals-area';
+                    
+                    animalsArea.appendChild(animalsDiv);
+                    
+                    // Assemble the layout
+                    contentDiv.appendChild(boardArea);
+                    contentDiv.appendChild(animalsArea);
+                    playerSection.appendChild(contentDiv);
+                    
+                    playersDiv.appendChild(playerSection);
+                });
+                
+                // Update End Turn button state
+                const endTurnButton = document.getElementById('end-turn');
+                const endRoundAction = actions.find(action => (action >> 8) === 5); // ACTION_END_ROUND = 5
+                endTurnButton.disabled = !endRoundAction || currentPlayer !== 0;
+                
+                // Highlight End Turn button if it's the only action available
+                const isOnlyAction = (actions.length === 1 && endRoundAction);
+                if (isOnlyAction) {
+                    endTurnButton.classList.add('highlighted');
+                } else {
+                    endTurnButton.classList.remove('highlighted');
+                }
+                
+                // Update Undo button state
+                const undoButton = document.getElementById('undo');
+                undoButton.disabled = !game.canUndo() || currentPlayer !== 0;
+                
+                // Update Score button visibility
+                const scoreButton = document.getElementById('show-score');
+                if (game.isGameFinished()) {
+                    scoreButton.style.display = 'inline-block';
+                } else {
+                    scoreButton.style.display = 'none';
+                }
+                
+                // Auto-play AI moves for non-zero players
+                if (currentPlayer !== 0 && actions.length > 0) {
+                    setTimeout(() => {
+                        aiMove();
+                    }, 500); // Small delay for visual feedback
+                }
+                
+            } catch (error) {
+                showError('Error updating display: ' + error.message);
+                console.error('Display error:', error);
+            }
+        }
+        
+        function executeAction(action) {
+            try {
+                // Clear selections when executing any action
+                selectedTokenInfo = null;
+                selectedAnimalInfo = null;
+                
+                const gameOver = game.doAction(action);
+                updateDisplay();
+                
+                if (gameOver) {
+                    showEndgamePopup();
+                }
+            } catch (error) {
+                showError('Error executing action: ' + error.message);
+                console.error('Action error:', error);
+            }
+        }
+        
+        function newGame() {
+            const seedInput = document.getElementById('setup-seed');
+            const playerCountInput = document.getElementById('setup-player-count');
+            const boardVariantInput = document.getElementById('setup-board-variant');
+            const useSpiritsInput = document.getElementById('setup-use-spirits');
+            
+            const seed = seedInput.value ? parseInt(seedInput.value) : Date.now();
+            const playerCount = parseInt(playerCountInput.value) || 2;
+            const boardVariant = parseInt(boardVariantInput.value) || 0;
+            const useSpirits = parseInt(useSpiritsInput.value);
+            
+            // Save the inputs to localStorage
+            saveSetupInputs(parseInt(seedInput.value), playerCount, boardVariant, useSpirits);
+            
+            game.initGame(seed, playerCount, boardVariant, useSpirits);
+            showGameBoard();
+            updateDisplay();
+            console.log('New game started - seed:', seed, 'players:', playerCount, 'variant:', boardVariant === 0 ? 'river' : 'islands', 'spirits:', useSpirits ? 'yes' : 'no');
+        }
+        
+        function aiMove() {
+            try {
+                const action = game.getAIAction();
+                const decoded = game.decodeAction(action);
+                console.log('AI chose action:', decoded);
+                
+                const gameOver = game.doAction(action);
+                updateDisplay();
+                
+                if (gameOver) {
+                    showEndgamePopup();
+                }
+            } catch (error) {
+                showError('Error executing AI move: ' + error.message);
+                console.error('AI move error:', error);
+            }
+        }
+        
+        function endTurn() {
+            try {
+                const actions = game.getActions();
+                const endRoundAction = actions.find(action => (action >> 8) === 5); // ACTION_END_ROUND = 5
+                
+                if (endRoundAction) {
+                    executeAction(endRoundAction);
+                }
+            } catch (error) {
+                showError('Error ending turn: ' + error.message);
+                console.error('End turn error:', error);
+            }
+        }
+        
+        function undoAction() {
+            try {
+                if (game.undo()) {
+                    updateDisplay();
+                }
+            } catch (error) {
+                showError('Error undoing action: ' + error.message);
+                console.error('Undo error:', error);
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showEndgamePopup() {
+            const state = game.getState();
+            const playerCount = state.players.length;
+            
+            // Get all player scores
+            const playerScores = [];
+            for (let i = 0; i < playerCount; i++) {
+                playerScores.push(game.getPlayerScore(i));
+            }
+            
+            // Find the maximum score and winners
+            const tieScore = s => s.score * 100 + s.tiebreak;
+            const maxScore = Math.max(...playerScores.map(tieScore));
+            const isWinner = playerScores.map(s => tieScore(s) === maxScore);
+            const numTied = playerScores.filter(s => s.score === Math.floor(maxScore/100)).length;
+            const isTied = numTied > 1 ? playerScores.map(s => s.score === Math.floor(maxScore/100)) : [];
+            
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'endgame-overlay';
+            
+            // Create popup
+            const popup = document.createElement('div');
+            popup.className = 'endgame-popup';
+
+            // Create table
+            const table = document.createElement('table');
+            table.className = 'endgame-table';
+            
+            // Header row
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            const componentHeader = document.createElement('th');
+            headerRow.appendChild(componentHeader);
+            
+            for (let i = 0; i < playerCount; i++) {
+                const th = document.createElement('th');
+                th.textContent = `Player ${i + 1}`;
+                headerRow.appendChild(th);
+            }
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Body rows
+            const tbody = document.createElement('tbody');
+            
+            const scoreComponents = [
+                { name: 'Trees', field: 'trees', class: 'row-tree' },
+                { name: 'Mountains', field: 'mountains', class: 'row-mountain' },
+                { name: 'Fields', field: 'fields', class: 'row-plains' },
+                { name: 'Buildings', field: 'buildings', class: 'row-building' },
+                { name: 'Water', field: 'water', class: 'row-water' },
+                { name: 'Animals', field: 'animals', class: 'row-animal' },
+            ];
+            if (game.useSpirits) {
+                scoreComponents.push({ name: 'Spirit', field: 'spirit', class: 'row-spirit' });
+            }
+            
+            scoreComponents.forEach(component => {
+                const row = document.createElement('tr');
+                row.className = component.class;
+                
+                const nameCell = document.createElement('td');
+                nameCell.className = 'component-name';
+                nameCell.textContent = component.name;
+                row.appendChild(nameCell);
+                
+                for (let i = 0; i < playerCount; i++) {
+                    const scoreCell = document.createElement('td');
+                    scoreCell.textContent = playerScores[i][component.field];
+                    row.appendChild(scoreCell);
+                }
+                
+                tbody.appendChild(row);
+            });
+            
+            // Total row
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'row-total';
+            
+            const totalNameCell = document.createElement('td');
+            totalNameCell.className = 'component-name';
+            totalNameCell.textContent = 'TOTAL';
+            totalRow.appendChild(totalNameCell);
+            
+            for (let i = 0; i < playerCount; i++) {
+                const totalCell = document.createElement('td');
+                totalCell.textContent = playerScores[i].score;
+                if (isTied[i]) {
+                    totalCell.textContent += '.' + playerScores[i].tiebreak.toString().padStart(2, '0');
+                }
+                
+                // Add crown to winner(s)
+                if (isWinner[i]) {
+                    const crown = document.createElement('span');
+                    crown.className = 'winner-crown';
+                    crown.textContent = '👑';
+                    totalCell.appendChild(crown);
+                }
+                
+                totalRow.appendChild(totalCell);
+            }
+            
+            tbody.appendChild(totalRow);
+            table.appendChild(tbody);
+            popup.appendChild(table);
+            
+            // Close button
+            const closeButton = document.createElement('button');
+            closeButton.className = 'endgame-close';
+            closeButton.textContent = 'Close';
+            closeButton.onclick = () => {
+                document.body.removeChild(overlay);
+            };
+            popup.appendChild(closeButton);
+            
+            overlay.appendChild(popup);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.onclick = (e) => {
+                if (e.target === overlay) {
+                    document.body.removeChild(overlay);
+                }
+            };
+        }
+        
+        // Event listeners
+        document.getElementById('start-new-game').addEventListener('click', newGame);
+        document.getElementById('back-to-board').addEventListener('click', () => {
+            // Only allow going back if there's an active game
+            if (game && !game.isGameFinished()) {
+                showGameBoard();
+                updateDisplay();
+            }
+        });
+        document.getElementById('exit-to-setup').addEventListener('click', showSetupScreen);
+        document.getElementById('ai-move').addEventListener('click', aiMove);
+        document.getElementById('end-turn').addEventListener('click', endTurn);
+        document.getElementById('undo').addEventListener('click', undoAction);
+        document.getElementById('show-score').addEventListener('click', showEndgamePopup);
+        
+        // Initialize
+        initWasm();
+    </script>
+</body>
+</html>

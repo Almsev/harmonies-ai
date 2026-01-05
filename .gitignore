@@ -1,0 +1,5 @@
+# Build outputs
+build/
+build-native/
+harminies.js
+harminies.wasm
