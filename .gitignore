@@ -1,5 +1,7 @@
 # Build outputs
 build/
 build-native/
+deploy/
 harminies.js
 harminies.wasm
+.netlify
