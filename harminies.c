@@ -744,7 +744,7 @@ int find_river_length(uint8_t *board, int board_idx) {
             // check neighbors
             for (int d = 0; d < 6; ++d) {
                 int board_idx = board_get_neighbour(idx, d, board_width);
-                if (board_idx > 0 && board_idx < board_size && !visited[board_idx]) {
+                if (board_idx >= 0 && board_idx < board_size && !visited[board_idx]) {
                     int neighbor_token = board[board_idx] & TOKEN_MASK;
                     if (neighbor_token == TOKEN_RIVER) {
                         visited[board_idx] = 1;
@@ -776,7 +776,7 @@ int find_components(uint8_t *board, int board_size, int target_token_mask, int *
             // check neighbors
             for (int d = 0; d < 6; ++d) {
                 int board_idx = board_get_neighbour(idx, d, board_width);
-                if (board_idx > 0 && board_idx < board_size && !visited[board_idx]) {
+                if (board_idx >= 0 && board_idx < board_size && !visited[board_idx]) {
                     int neighbor_token = 1 << (board[board_idx] & TOKEN_MASK);
                     if (neighbor_token & target_token_mask) {
                         visited[board_idx] = 1;
@@ -810,7 +810,7 @@ int player_score(struct state *s, int player_idx, uint8_t *components) {
             int has_mountain_neighbor = 0;
             for (int d = 0; d < 6; ++d) {
                 int board_idx = board_get_neighbour(i, d, board_width);
-                if (board_idx > 0 && board_idx < board_size) {
+                if (board_idx >= 0 && board_idx < board_size) {
                     int neighbor_token = board[board_idx] & TOKEN_MASK;
                     if (token_to_color[neighbor_token] == TOKEN_MOUNTAIN) {
                         has_mountain_neighbor = 1;
@@ -826,7 +826,7 @@ int player_score(struct state *s, int player_idx, uint8_t *components) {
             int colors = 0;
             for(int d = 0; d < 6; ++d) {
                 int board_idx = board_get_neighbour(i, d, board_width);
-                if (board_idx > 0 && board_idx < board_size && board[board_idx]) {
+                if (board_idx >= 0 && board_idx < board_size && board[board_idx]) {
                     int neighbor_token = board[board_idx] & TOKEN_MASK;
                     int neighbor_color = token_to_color[neighbor_token];
                     colors |= (1 << neighbor_color);
