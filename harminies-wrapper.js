@@ -15,12 +15,21 @@ class HarminiesGame {
     this.wasm_get_ai_action = this.module.cwrap('wasm_get_ai_action', 'number', []);
     this.wasm_get_state = this.module.cwrap('wasm_get_state', 'number', []);
     this.wasm_get_animal = this.module.cwrap('wasm_get_animal', 'number', ['number']);
+    this.wasm_get_animal_count = this.module.cwrap('wasm_get_animal_count', 'number', []);
+    this.wasm_get_spirit_animal_start = this.module.cwrap('wasm_get_spirit_animal_start', 'number', []);
+    this.wasm_get_spirit_animal_count = this.module.cwrap('wasm_get_spirit_animal_count', 'number', []);
+    this.wasm_set_ai_speed = this.module.cwrap('wasm_set_ai_speed', null, ['number']);
+    this.wasm_set_use_dlc = this.module.cwrap('wasm_set_use_dlc', null, ['number']);
     
     // Constants from C code
     this.MAX_ACTIONS = 256;
     this.BOARD_SIZE = 25;
     this.MAX_PLAYERS = 4;
     this.MAX_ANIMALS_PER_PLAYER = 4;
+    this.ANIMAL_DECK_CAPACITY = 42;
+    this.spiritAnimalStart = this.wasm_get_spirit_animal_start();
+    this.spiritAnimalCount = this.wasm_get_spirit_animal_count();
+    this.totalAnimalCount = this.wasm_get_animal_count();
     
     // Action types
     this.ACTION_TYPES = {
@@ -35,11 +44,14 @@ class HarminiesGame {
     // Internal state
     this.playerCount = 2;
     this.boardVariant = 0; // 0 = river, 1 = islands
-    this.useSpirits = 1; // 0 = no spirits, 1 = use spirits
+    this.useSpirits = 1; // 0 = no spirits, 1 = spirits, 2 = spirits + T-Rex promo
+    this.useDlc = 0; // 0 = base game only, 1 = include Pulse DLC animals
+    this.allBotMode = 0; // 0 = player 0 human, 1 = all players are bots
     this.currentSeed = 0;
     this.actionLog = []; // Array of {player, action}
     this.gameFinished = false;
     this.storageKey = 'harminies_game_state';
+    this.aiSpeed = 2; // 0 = Quick, 1 = Normal, 2 = Slow, 3 = Ultra Slow
   }
   
   /**
@@ -47,15 +59,23 @@ class HarminiesGame {
    * @param {number} seed - Random seed for the game
    * @param {number} playerCount - Number of players (2-4)
    * @param {number} boardVariant - Board variant (0 = river, 1 = islands)
-   * @param {number} useSpirits - Use spirits flag (0 = no, 1 = yes)
+  * @param {number} useSpirits - Use spirits mode (0 = no, 1 = yes, 2 = yes + T-Rex)
+   * @param {number} useDlc - Include Pulse DLC normal animals (0 = no, 1 = yes)
+    * @param {number} aiSpeed - Bot thinking speed (0 = Quick, 1 = Normal, 2 = Slow, 3 = Ultra Slow)
+   * @param {number} allBotMode - Enable full bot autoplay (0 = no, 1 = yes)
    */
-  initGame(seed = Date.now(), playerCount = 2, boardVariant = 0, useSpirits = 1) {
+  initGame(seed = Date.now(), playerCount = 2, boardVariant = 0, useSpirits = 1, useDlc = 0, aiSpeed = 2, allBotMode = 0) {
     this.playerCount = playerCount;
     this.boardVariant = boardVariant;
     this.useSpirits = useSpirits;
+    this.useDlc = useDlc;
+    this.aiSpeed = aiSpeed;
+    this.allBotMode = allBotMode;
     this.currentSeed = seed >>> 0; // Ensure unsigned 32-bit seed
     this.actionLog = []; // Clear action log
     this.gameFinished = false;
+    this.wasm_set_ai_speed(aiSpeed);
+    this.wasm_set_use_dlc(useDlc);
     this.wasm_init_game(this.currentSeed, playerCount, boardVariant, useSpirits);
     this.saveToStorage();
   }
@@ -70,8 +90,11 @@ class HarminiesGame {
         playerCount: this.playerCount,
         boardVariant: this.boardVariant,
         useSpirits: this.useSpirits,
+        useDlc: this.useDlc,
+        allBotMode: this.allBotMode,
         actions: this.actionLog.map(entry => entry.action),
       };
+      state.aiSpeed = this.aiSpeed; // Save AI speed to state
       localStorage.setItem(this.storageKey, JSON.stringify(state));
     } catch (error) {
       console.warn('Failed to save game state to localStorage:', error);
@@ -94,13 +117,21 @@ class HarminiesGame {
       // Default values for backward compatibility
       const boardVariant = state.boardVariant !== undefined ? state.boardVariant : 0;
       const useSpirits = state.useSpirits !== undefined ? state.useSpirits : 1;
+      const useDlc = state.useDlc !== undefined ? state.useDlc : 0;
+      const aiSpeed = state.aiSpeed !== undefined ? state.aiSpeed : 2;
+      const allBotMode = state.allBotMode !== undefined ? state.allBotMode : 0;
       
       // Reinitialize with saved parameters
+      this.wasm_set_ai_speed(aiSpeed);
+      this.wasm_set_use_dlc(useDlc);
       this.wasm_init_game(state.seed, state.playerCount, boardVariant, useSpirits);
       this.currentSeed = state.seed;
       this.playerCount = state.playerCount;
       this.boardVariant = boardVariant;
       this.useSpirits = useSpirits;
+      this.useDlc = useDlc;
+      this.aiSpeed = aiSpeed;
+      this.allBotMode = allBotMode;
       this.actionLog = [];
       this.gameFinished = false;
       
@@ -260,6 +291,8 @@ class HarminiesGame {
     const actionsToReplay = this.actionLog.slice(0, -1);
     
     // Reinitialize the game with the same seed and player count
+    this.wasm_set_ai_speed(this.aiSpeed);
+    this.wasm_set_use_dlc(this.useDlc);
     this.wasm_init_game(this.currentSeed, this.playerCount, this.boardVariant, this.useSpirits);
     this.actionLog = [];
     this.gameFinished = false;
@@ -362,8 +395,8 @@ class HarminiesGame {
     
     offset += 9;
     
-    // Animal deck (32 bytes)
-    for (let i = 0; i < 32; i++) {
+    // Animal deck (42 bytes with DLC capacity)
+    for (let i = 0; i < this.ANIMAL_DECK_CAPACITY; i++) {
       state.animalDeck.push(HEAP8[offset++]);
     }
     
@@ -465,7 +498,7 @@ class HarminiesGame {
   /**
    * Get an animal struct from WASM and convert to JS object
    * @param {number} index - Animal index in the deck
-   * @returns {Object|null} { token, env: [{token,pos},...], score: [..] } or null if pointer is 0
+  * @returns {Object|null} { token, env: [{token,positions},...], score: [..], hasAlternativeComposition } or null if pointer is 0
    */
   getAnimal(index) {
     const ptr = this.wasm_get_animal(index);
@@ -478,23 +511,36 @@ class HarminiesGame {
     // token (uint8_t)
     const token = HEAP8[off++];
 
-    // env[3] each { uint8_t token; uint8_t pos; }
+    // env[3] each { uint8_t token; uint8_t pos_a; uint8_t pos_b; }
     const env = [];
+    let hasAlternativeComposition = false;
     for (let i = 0; i < 3; i++) {
       const envToken = HEAP8[off++];
-      const envPos = HEAPU8[off++];
+      const envPosA = HEAPU8[off++];
+      const envPosB = HEAPU8[off++];
       const tokenPosMap = {
+        0x32: 0,
         0x33: 0,
         0xF3: 1,
         0xF0: 3,
         0x34: 4,
         0xF4: 5,
         0xF5: 6,
+        0xF1: 2,
+        0xF2: 4,
       }
-      if (envToken) env.push({
-        token: envToken,
-        pos: tokenPosMap[envPos],
-      });
+      if (envToken) {
+        const posA = tokenPosMap[envPosA] !== undefined ? tokenPosMap[envPosA] : 1;
+        const mappedPosB = tokenPosMap[envPosB];
+        const posB = mappedPosB !== undefined ? mappedPosB : posA;
+        if (posB !== posA) hasAlternativeComposition = true;
+        env.push({
+          token: envToken,
+          positions: [posA, posB],
+          pos: posA,
+          altPos: posB,
+        });
+      }
     }
 
     // score[MAX_ANIMAL_PROGRESS] (MAX_ANIMAL_PROGRESS == 5)
@@ -529,7 +575,15 @@ class HarminiesGame {
       if (s) score.push(total);
     }
 
-    return { token, env, score };
+    return { token, env, score, hasAlternativeComposition };
+  }
+
+  getAnimalCount() {
+    return this.totalAnimalCount;
+  }
+
+  isSpiritAnimal(animalId) {
+    return animalId >= this.spiritAnimalStart && animalId < this.spiritAnimalStart + this.spiritAnimalCount;
   }
     
   /**

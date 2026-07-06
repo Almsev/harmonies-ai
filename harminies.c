@@ -3,6 +3,7 @@
 #include <time.h>
 #ifndef __EMSCRIPTEN__
 #include <stdio.h>
+#include <string.h>
 #endif
 
 
@@ -29,6 +30,15 @@ static inline uint32_t rng_range(uint32_t *rng_state, uint32_t n) {
     *rng_state = x;
     uint64_t prod = (uint64_t)x * (uint64_t)n;
     return (uint32_t)(prod >> 32);
+}
+
+static inline int popcount_u32(uint32_t x) {
+    int cnt = 0;
+    while (x) {
+        x &= x - 1;
+        cnt++;
+    }
+    return cnt;
 }
 
 typedef const char *(*hex_cell_cb)(int x, int y, int w, void *userdata);
@@ -155,15 +165,26 @@ static uint8_t token_to_height[13] = {
 #define ACTION_END_ROUND 5
 #define ACTION_CHOOSE_SPIRIT 6 // params spirit idx 0-1
 
+#define BASE_NORMAL_ANIMAL_COUNT 32
+#define SPIRIT_ANIMAL_START BASE_NORMAL_ANIMAL_COUNT
+#define SPIRIT_ANIMAL_COUNT 11
+#define BASE_SPIRIT_ANIMAL_COUNT 10
+#define TREX_SPIRIT_ID (SPIRIT_ANIMAL_START + BASE_SPIRIT_ANIMAL_COUNT)
+#define DLC_NORMAL_ANIMAL_START (SPIRIT_ANIMAL_START + SPIRIT_ANIMAL_COUNT)
+#define DLC_NORMAL_ANIMAL_COUNT 10
+#define ANIMAL_DECK_CAPACITY (BASE_NORMAL_ANIMAL_COUNT + DLC_NORMAL_ANIMAL_COUNT)
+#define TOTAL_ANIMAL_COUNT (BASE_NORMAL_ANIMAL_COUNT + SPIRIT_ANIMAL_COUNT + DLC_NORMAL_ANIMAL_COUNT)
+
 #define MAX_ANIMAL_PROGRESS 5
 struct animal {
     uint8_t token;
     struct env {
         uint8_t token;
-        uint8_t pos;
+        uint8_t pos_a;
+        uint8_t pos_b;
     } env[3];
     int8_t score[MAX_ANIMAL_PROGRESS];
-} animals[42] = {
+} animals[TOTAL_ANIMAL_COUNT] = {
     { 1, { { 1, 0xF3 }, { 11, 0x33 } }, { 4, 5, 6 } }, // Crocodile
     { 1, { { 4, 0xF4 }, {  4, 0xF3 } }, { 4, 6, 6 } }, // Ray
     { 1, { { 9, 0xF3 }               }, { 3, 3, 4, 6 } }, // Salmon
@@ -171,7 +192,7 @@ struct animal {
     { 1, { { 5, 0xF3 }               }, { 2, 2, 2, 4, 5 } }, // Frog
     { 1, { { 7, 0xF3 }               }, { 2, 2, 4, 5 } }, // Duck
     { 1, { { 2, 0xF4 }, {  2, 0xF3 } }, { 4, 6, 6 } }, // Flamingo
-    { 7, { { 2, 0xF3 }, {  2, 0x33 } }, { 5, 5, 6 } }, // Gekko
+    { 7, { { 2, 0xF3 }, {  2, 0x33 } }, { 5, 5, 6 } }, // Gecko
     { 7, { { 2, 0xF0 }, {  2, 0xF4 } }, { 5, 5, 7 } }, // Shrew
     { 7, { { 1, 0xF0 }, {  1, 0xF4 } }, { 5, 5, 7 } }, // Peacock
 
@@ -206,10 +227,23 @@ struct animal {
     { 11, { { 5, 0xF4 }, { 5, 0xF3 }}, { -2, 3, 3, 1 }}, // Owl
     { 7, { { 5, 0xF3 }, { 7, 0x33 }}, { -1, 4, 4, 4 }}, // Cat
     { 7, { { 7, 0xF3 }, { 2, 0x33 }}, { -1, 0, 6, 6 }}, // Stork
-    { 9, { { 8, 0xF3 }}, { -2, 0, 4, 4 }}, // Ram
+    { 9, { { 8, 0xF3 }}, { -2, 0, 4, 4 }}, // Goat
     { 8, { { 4, 0xF0 }, { 4, 0xF4 }}, { -2, 3, 3, 1 }}, // Beaver
     { 1, { { 10, 0xF0 }, { 10, 0xF3 }}, { -1, 0, 7, 7 }}, // Dragonfly
     { 1, { { 1, 0xF0 }, { 8, 0xF3 }}, { -2, 2, 0, 0 }}, // Tortoise
+    { 2, { { 9, 0xF0 }, { 11, 0xF3 } }, { -3 } }, // T-Rex promo spirit
+
+    // Harmonies: Pulse DLC normal animals (single card, optional dual composition)
+    { 1, { { 11, 0xF4, 0xF3 }, { 2, 0x34, 0x34 } }, { 6, 7 } }, // Piranha
+    { 1, { { 10, 0xF3, 0xF4 }, { 8, 0xF4, 0xF3 } }, { 7, 9 } }, // Axolotl
+    { 7, { { 4, 0xF3, 0xF4 }, { 5, 0xF4, 0xF3 } }, { 4, 6, 7 } }, // Robin
+    { 7, { { 2, 0xF4, 0xF3 }, { 1, 0x34, 0x34 } }, { 5, 6 } }, // Seagull
+    { 5, { { 4, 0xF4, 0xF3 }, { 1, 0x34, 0x34 } }, { 3, 7, 6 } }, // Tiger
+    { 5, { { 1, 0xF3, 0xF5 }, { 2, 0xF5, 0xF3 } }, { 4, 4, 7 } }, // Chameleon
+    { 4, { { 7, 0xF3, 0xF5 }, { 2, 0xF5, 0xF3 } }, { 4, 5, 7 } }, // Camel
+    { 8, { { 2, 0xF3 }, { 1, 0xF0 } }, { 7, 9 } }, // Yak
+    { 2, { { 4, 0xF3, 0xF4 }, { 11, 0xF4, 0xF3 } }, { 5, 8 } }, // Panda
+    { 2, { { 4, 0xF3 }, { 7, 0xF0 } }, { 5, 7 } }, // Beetle
 };
 struct state {
     uint32_t rng_state;
@@ -217,7 +251,7 @@ struct state {
     uint8_t round;
     uint8_t round_state;
     uint8_t animal_deck_size;
-    uint8_t animal_deck[32]; // 32 bits?
+    uint8_t animal_deck[ANIMAL_DECK_CAPACITY]; // normal animal deck indices
     uint8_t token_bag[6]; // 120 tokens
     int8_t animals[5];
     int8_t token_supply[5][3];
@@ -238,16 +272,62 @@ static int board_width = 9;
 #define WATER_SCORE_TYPE_ISLANDS 1
 static int water_score_type = 0;
 static int use_spirits = 0;
+static int use_dlc_animals = 0;
+static int ai_playouts = 10000;
+
+int board_get_neighbour2_rot(int idx, int dirs, int ndirs, int width, int rot);
+
+static inline int is_spirit_animal_id(int animal_id) {
+    return animal_id >= SPIRIT_ANIMAL_START && animal_id < SPIRIT_ANIMAL_START + SPIRIT_ANIMAL_COUNT;
+}
+
+static inline uint8_t env_pos_for_mode(const struct env *e, int mode) {
+    if (mode == 0 || e->pos_b == 0) return e->pos_a;
+    return e->pos_b;
+}
+
+static int animal_matches_at(struct state *s, int player_idx, int board_pos, const struct animal *a) {
+    int has_alt_mode = 0;
+    for (int e = 0; e < 3; ++e) {
+        if (a->env[e].token && a->env[e].pos_b && a->env[e].pos_b != a->env[e].pos_a) {
+            has_alt_mode = 1;
+            break;
+        }
+    }
+    int mode_count = has_alt_mode ? 2 : 1;
+    for (int mode = 0; mode < mode_count; ++mode) {
+        for (int r = 0; r < 6; ++r) {
+            int e = 0;
+            for (; e < 3; ++e) if (a->env[e].token) {
+                uint8_t env_pos = env_pos_for_mode(&a->env[e], mode);
+                int idx = board_get_neighbour2_rot(board_pos, env_pos, 2, board_width, r);
+                if (idx < 0 || idx >= board_size || (s->p[player_idx].board[idx] & TOKEN_MASK) != a->env[e].token) {
+                    break;
+                }
+            }
+            if (e == 3) return 1;
+        }
+    }
+    return 0;
+}
 
 
 void init_game(struct state *s, uint32_t seed)
 {
     s->rng_state = rng_seed(seed);
     s->round = 0;
-    for (int i = 0; i < 32; ++i) {
+    for (int i = 0; i < ANIMAL_DECK_CAPACITY; ++i) {
+        s->animal_deck[i] = 0;
+    }
+    for (int i = 0; i < BASE_NORMAL_ANIMAL_COUNT; ++i) {
         s->animal_deck[i] = i;
     }
-    s->animal_deck_size = 32;
+    s->animal_deck_size = BASE_NORMAL_ANIMAL_COUNT;
+    if (use_dlc_animals) {
+        for (int i = 0; i < DLC_NORMAL_ANIMAL_COUNT; ++i) {
+            s->animal_deck[s->animal_deck_size++] = DLC_NORMAL_ANIMAL_START + i;
+        }
+    }
     s->token_bag[0] = 23; // river
     s->token_bag[1] = 19; // plains
     s->token_bag[2] = 21; // wood
@@ -274,7 +354,8 @@ void init_game(struct state *s, uint32_t seed)
         s->p[p].score = 0;
         s->p[p].spirit_state = -1;
     }
-    s->spirit_deck = (1 << 10) - 1;
+    int spirit_pool_size = (use_spirits == 2) ? SPIRIT_ANIMAL_COUNT : BASE_SPIRIT_ANIMAL_COUNT;
+    s->spirit_deck = (1 << spirit_pool_size) - 1;
 }
 
 uint32_t token_stack[64] = {
@@ -349,7 +430,7 @@ void init_round(struct state *s)
         }
     }
     if (use_spirits && s->round < player_count) {
-        int spirit_count = __builtin_popcount(s->spirit_deck);
+        int spirit_count = popcount_u32(s->spirit_deck);
         int idx1 = rng_range(&s->rng_state, spirit_count);
         int idx2 = rng_range(&s->rng_state, spirit_count - 1);
         int spirit1 = -1, spirit2 = -1;
@@ -357,8 +438,8 @@ void init_round(struct state *s)
         s->spirit_deck &= ~(1 << spirit1);
         for (int i = 0; i < 8 * sizeof(s->spirit_deck); ++i) if (s->spirit_deck & (1 << i)) if (idx2-- == 0) spirit2 = i;
         s->spirit_deck &= ~(1 << spirit2);
-        s->p[s->round].animals[0] = (spirit1 + 32) << 3;
-        s->p[s->round].animals[1] = (spirit2 + 32) << 3;
+        s->p[s->round].animals[0] = (spirit1 + SPIRIT_ANIMAL_START) << 3;
+        s->p[s->round].animals[1] = (spirit2 + SPIRIT_ANIMAL_START) << 3;
     }
 }
 static int board_xy_to_index(int x, int y, int width)
@@ -461,7 +542,7 @@ void print_state(struct state *s)
             for (int e = 0; e < 3; ++e) {
                 if (a->env[e].token) {
                     int xy[2];
-                    hexboard_rel(i * 5 + 2, 0, a->env[e].pos, 2, xy);
+                        hexboard_rel(i * 5 + 2, 0, a->env[e].pos_a, 2, xy);
                     board_put_at(animal_display_board, 5*5*2, xy[0], xy[1], a->env[e].token);
                 }
             }
@@ -483,7 +564,7 @@ void print_state(struct state *s)
                 for (int e = 0; e < 3; ++e) {
                     if (a->env[e].token) {
                         int xy[2];
-                        hexboard_rel(i * 5 + 2, 0, a->env[e].pos, 2, xy);
+                        hexboard_rel(i * 5 + 2, 0, a->env[e].pos_a, 2, xy);
                         board_put_at(player_animal_display_board, 4*5*2, xy[0], xy[1], a->env[e].token);
                     }
                 }
@@ -503,7 +584,7 @@ static int get_actions(struct state *s, uint16_t *out_actions, int opt)
     int tokens_chosen = s->round_state & 0x8;
     int animal_chosen = s->round_state & 0x10;
     int8_t *token_supply = s->token_supply[token_supply_idx];
-    if (use_spirits && (s->p[player_idx].animals[1] >> 3) >= 32) {
+    if (use_spirits && is_spirit_animal_id(s->p[player_idx].animals[1] >> 3)) {
         out_actions[action_count++] = (ACTION_CHOOSE_SPIRIT << 8) | 0;
         out_actions[action_count++] = (ACTION_CHOOSE_SPIRIT << 8) | 1;
         return action_count;
@@ -549,21 +630,8 @@ static int get_actions(struct state *s, uint16_t *out_actions, int opt)
             int animal_id = s->p[player_idx].animals[i] >> 3;
             struct animal *a = &animals[animal_id];
             for (int j = 0; j < board_size; ++j) {
-                if (s->p[player_idx].board[j] == a->token) {
-                    int r = 0;
-                    for (; r < 6; ++r) {
-                        int e = 0;
-                        for (; e < 3; ++e) if (a->env[e].token) {
-                            int board_idx = board_get_neighbour2_rot(j, a->env[e].pos, 2, board_width, r);
-                            if (board_idx < 0 || board_idx >= board_size || (s->p[player_idx].board[board_idx] & TOKEN_MASK) != a->env[e].token) {
-                                break;
-                            }
-                        }
-                        if (e == 3) break;
-                    }
-                    if (r < 6) {
-                        out_actions[action_count++] = (ACTION_PLACE_ANIMAL << 8) | (i << 5) | j;
-                    }
+                if (s->p[player_idx].board[j] == a->token && animal_matches_at(s, player_idx, j, a)) {
+                    out_actions[action_count++] = (ACTION_PLACE_ANIMAL << 8) | (i << 5) | j;
                 }
             }
         }
@@ -789,6 +857,39 @@ int find_components(uint8_t *board, int board_size, int target_token_mask, int *
     }
     return component_count;
 }
+
+static int score_trex_connected_animals(uint8_t *board) {
+    int spirit_idx = -1;
+    for (int i = 0; i < board_size; ++i) {
+        if (board[i] & TOKEN_SPIRIT) {
+            spirit_idx = i;
+            break;
+        }
+    }
+    if (spirit_idx < 0 || !(board[spirit_idx] & TOKEN_ANIMAL)) return 0;
+
+    uint8_t visited[MAX_BOARD_SIZE] = {0};
+    int stack[MAX_BOARD_SIZE];
+    int stack_size = 0;
+    int connected_animals = 0;
+
+    visited[spirit_idx] = 1;
+    stack[stack_size++] = spirit_idx;
+    while (stack_size > 0) {
+        int idx = stack[--stack_size];
+        connected_animals++;
+        for (int d = 0; d < 6; ++d) {
+            int nidx = board_get_neighbour(idx, d, board_width);
+            if (nidx >= 0 && nidx < board_size && !visited[nidx] && (board[nidx] & TOKEN_ANIMAL)) {
+                visited[nidx] = 1;
+                stack[stack_size++] = nidx;
+            }
+        }
+    }
+    if (connected_animals <= 1) return 0; // exclude T-Rex itself
+    return (connected_animals - 1) * 2;
+}
+
 int player_score(struct state *s, int player_idx, uint8_t *components) {
     int score = s->p[player_idx].score;
     int score_trees = 0;
@@ -832,7 +933,7 @@ int player_score(struct state *s, int player_idx, uint8_t *components) {
                     colors |= (1 << neighbor_color);
                 }
             }
-            if (__builtin_popcount(colors) >= 3) score_buildings += 5;
+            if (popcount_u32(colors) >= 3) score_buildings += 5;
         }
         if (token == TOKEN_RIVER && water_score_type == WATER_SCORE_TYPE_RIVER) {
             int river_length = find_river_length(board, i);
@@ -866,6 +967,8 @@ int player_score(struct state *s, int player_idx, uint8_t *components) {
                 int token = board[i] & TOKEN_MASK;
                 if (token_to_color[token] == spirit_color) score_spirit += spirit->score[token_to_height[token]];
             }
+        } else if (score_type == -3 && spirit_id == TREX_SPIRIT_ID) {
+            score_spirit += score_trex_connected_animals(board);
         }
     }
     if (components) {
@@ -884,7 +987,6 @@ int global_action_cnt = 0;
 
 int best_random(struct state *s, uint16_t *action, int action_count) {
     if (action_count <= 0) return -1;
-    const int PLAYOUTS = 1000;
     uint16_t local_actions[MAX_ACTIONS];
     long best_total = -1;
     int best_idx = 0;
@@ -894,7 +996,7 @@ int best_random(struct state *s, uint16_t *action, int action_count) {
 
     for (int ai = 0; ai < action_count; ++ai) {
         long total = 0;
-        for (int pl = 0; pl < PLAYOUTS; ++pl) {
+        for (int pl = 0; pl < ai_playouts; ++pl) {
             struct state ts = *s; /* copy state */
             ts.rng_state ^= (pl + 1) * 0x9E3779B9; /* different RNG seed per playout */
             /* apply first action */
@@ -916,6 +1018,28 @@ int best_random(struct state *s, uint16_t *action, int action_count) {
     }
     return best_idx;
 }
+static void set_ai_speed_level(int speed_level) {
+    switch (speed_level) {
+    case 0:
+        ai_playouts = 1000;
+        break;
+    case 1:
+        ai_playouts = 3000;
+        break;
+    case 2:
+        ai_playouts = 10000;
+        break;
+    case 3:
+        ai_playouts = 30000;
+        break;
+    case 4:
+        ai_playouts = 100000;
+        break;
+    default:
+        ai_playouts = 10000;
+        break;
+    }
+}
 struct state global_state;
 void wasm_init_game(uint32_t seed, int num_players, int board_variant, int use_spirits_flag) {
     player_count = num_players;
@@ -933,6 +1057,12 @@ void wasm_init_game(uint32_t seed, int num_players, int board_variant, int use_s
     init_neigbours(board_width);
     init_game(&global_state, seed);
     init_round(&global_state);
+}
+void wasm_set_ai_speed(int speed_level) {
+    set_ai_speed_level(speed_level);
+}
+void wasm_set_use_dlc(int enabled) {
+    use_dlc_animals = enabled ? 1 : 0;
 }
 int wasm_get_actions(uint16_t *out_actions) {
     return get_actions(&global_state, out_actions, 0);
@@ -975,14 +1105,243 @@ struct state* wasm_get_state(void) {
     return &global_state;
 }
 struct animal* wasm_get_animal(int idx) {
-    if (idx < 0 || idx >= 42) return NULL;
+    if (idx < 0 || idx >= TOTAL_ANIMAL_COUNT) return NULL;
     return &animals[idx];
 }
+int wasm_get_animal_count(void) {
+    return TOTAL_ANIMAL_COUNT;
+}
+int wasm_get_spirit_animal_start(void) {
+    return SPIRIT_ANIMAL_START;
+}
+int wasm_get_spirit_animal_count(void) {
+    return SPIRIT_ANIMAL_COUNT;
+}
 #ifndef __EMSCRIPTEN__
+static const char *token_metric_names[13] = {
+    "empty", "river", "plains", "wood", "mountain", "tree", "building", "finished_building",
+    "mountain_2x", "mountain_3x", "tree_2x", "tree_3x", "wood_2x"
+};
+
+static void count_board_tokens(uint8_t *board, int out_counts[13]) {
+    for (int t = 0; t < 13; ++t) out_counts[t] = 0;
+    for (int i = 0; i < board_size; ++i) {
+        int token = board[i] & TOKEN_MASK;
+        if (token >= 0 && token <= 12) out_counts[token]++;
+    }
+}
+
+static int is_file_empty(FILE *f) {
+    long cur = ftell(f);
+    if (cur < 0) cur = 0;
+    if (fseek(f, 0, SEEK_END) != 0) return 1;
+    long sz = ftell(f);
+    if (sz < 0) sz = 0;
+    (void)fseek(f, cur, SEEK_SET);
+    return sz == 0;
+}
+
+static void write_batch_csv_header(FILE *csv) {
+    fprintf(csv, "game_index,seed,players,board_variant,use_spirits,use_dlc,rounds");
+    for (int p = 0; p < MAX_PLAYER_COUNT; ++p) {
+        int pn = p + 1;
+        fprintf(csv, ",p%d_total_score,p%d_score_trees,p%d_score_mountains,p%d_score_fields,p%d_score_buildings,p%d_score_water,p%d_score_animals,p%d_score_spirit,p%d_tiebreak",
+            pn, pn, pn, pn, pn, pn, pn, pn, pn);
+        for (int t = 1; t <= 12; ++t) {
+            fprintf(csv, ",p%d_tok_%s", pn, token_metric_names[t]);
+        }
+        for (int a = 0; a < TOTAL_ANIMAL_COUNT; ++a) {
+            fprintf(csv, ",p%d_a%02d_used,p%d_a%02d_completed,p%d_a%02d_face_score", pn, a, pn, a, pn, a);
+        }
+    }
+    fputc('\n', csv);
+}
+
+static void print_usage(const char *prog) {
+    printf("Usage:\n");
+    printf("  %s [seed] [board_variant] [use_spirits] [use_dlc]            # old demo mode\n", prog);
+    printf("  %s --ai-batch <games> [--seed N] [--players 2-4] [--board 0|1] [--spirits 0|1|2] [--dlc 0|1] [--csv path]\n", prog);
+}
+
+static int run_ai_batch(
+    int games,
+    uint32_t seed,
+    int num_players,
+    int board_variant,
+    int use_spirits_flag,
+    int use_dlc_flag,
+    const char *csv_path
+) {
+    if (games <= 0) {
+        fprintf(stderr, "games must be > 0\n");
+        return 1;
+    }
+    if (num_players < 2 || num_players > 4) {
+        fprintf(stderr, "players must be 2..4\n");
+        return 1;
+    }
+    if (use_spirits_flag < 0 || use_spirits_flag > 2) {
+        fprintf(stderr, "spirits must be 0, 1, or 2\n");
+        return 1;
+    }
+    FILE *csv = fopen(csv_path, "a+");
+    if (!csv) {
+        fprintf(stderr, "failed to open csv file: %s\n", csv_path);
+        return 1;
+    }
+    if (is_file_empty(csv)) {
+        write_batch_csv_header(csv);
+    }
+    if (fseek(csv, 0, SEEK_END) != 0) {
+        fclose(csv);
+        fprintf(stderr, "failed to seek csv file\n");
+        return 1;
+    }
+
+    uint8_t components[8];
+    for (int g = 0; g < games; ++g) {
+        uint32_t game_seed = seed + (uint32_t)g * 2654435761u;
+        int used[MAX_PLAYER_COUNT][TOTAL_ANIMAL_COUNT] = {0};
+        int completed[MAX_PLAYER_COUNT][TOTAL_ANIMAL_COUNT] = {0};
+        int face_score[MAX_PLAYER_COUNT][TOTAL_ANIMAL_COUNT] = {0};
+        int token_counts[MAX_PLAYER_COUNT][13] = {{0}};
+        int score_total[MAX_PLAYER_COUNT] = {0};
+        int score_trees[MAX_PLAYER_COUNT] = {0};
+        int score_mountains[MAX_PLAYER_COUNT] = {0};
+        int score_fields[MAX_PLAYER_COUNT] = {0};
+        int score_buildings[MAX_PLAYER_COUNT] = {0};
+        int score_water[MAX_PLAYER_COUNT] = {0};
+        int score_animals[MAX_PLAYER_COUNT] = {0};
+        int score_spirit[MAX_PLAYER_COUNT] = {0};
+        int score_tiebreak[MAX_PLAYER_COUNT] = {0};
+
+        wasm_set_use_dlc(use_dlc_flag);
+        wasm_init_game(game_seed, num_players, board_variant, use_spirits_flag);
+
+        int end = 0;
+        int guard = 0;
+        while (!end && guard++ < 10000) {
+            int player_idx = global_state.round % player_count;
+            uint16_t action = (uint16_t)wasm_get_ai_action();
+            int action_type = (action >> 8) & 0xFF;
+            int params = action & 0xFF;
+
+            if (action_type == ACTION_CHOOSE_ANIMAL) {
+                int supply_idx = params & 0x7;
+                int animal_id = global_state.animals[supply_idx];
+                if (animal_id >= 0 && animal_id < TOTAL_ANIMAL_COUNT) {
+                    used[player_idx][animal_id]++;
+                }
+            } else if (action_type == ACTION_CHOOSE_SPIRIT) {
+                int slot = params & 1;
+                int animal_state = global_state.p[player_idx].animals[slot];
+                if (animal_state != -1) {
+                    int animal_id = animal_state >> 3;
+                    if (animal_id >= 0 && animal_id < TOTAL_ANIMAL_COUNT) {
+                        used[player_idx][animal_id]++;
+                    }
+                }
+            } else if (action_type == ACTION_PLACE_ANIMAL) {
+                int animal_slot = (params >> 5) & 0x3;
+                int animal_state = global_state.p[player_idx].animals[animal_slot];
+                if (animal_state != -1) {
+                    int animal_id = animal_state >> 3;
+                    int animal_progress = animal_state & 0x7;
+                    if (animal_id >= 0 && animal_id < TOTAL_ANIMAL_COUNT) {
+                        struct animal *a = &animals[animal_id];
+                        int score = a->score[animal_progress];
+                        if (score > 0) face_score[player_idx][animal_id] += score;
+                        if (score <= 0 || animal_progress + 1 >= MAX_ANIMAL_PROGRESS || a->score[animal_progress + 1] == 0) {
+                            completed[player_idx][animal_id]++;
+                        }
+                    }
+                }
+            }
+
+            end = wasm_do_action(action);
+        }
+
+        if (guard >= 10000) {
+            fprintf(stderr, "warning: game %d reached action guard limit\n", g + 1);
+        }
+
+        for (int p = 0; p < MAX_PLAYER_COUNT; ++p) {
+            if (p < num_players) {
+                score_total[p] = player_score(&global_state, p, components);
+                score_trees[p] = components[0];
+                score_mountains[p] = components[1];
+                score_fields[p] = components[2];
+                score_buildings[p] = components[3];
+                score_water[p] = components[4];
+                score_animals[p] = components[5];
+                score_spirit[p] = components[6];
+                score_tiebreak[p] = components[7];
+                count_board_tokens(global_state.p[p].board, token_counts[p]);
+            }
+        }
+
+        fprintf(csv, "%d,%u,%d,%d,%d,%d,%d", g + 1, game_seed, num_players, board_variant, use_spirits_flag, use_dlc_flag, global_state.round);
+        for (int p = 0; p < MAX_PLAYER_COUNT; ++p) {
+            fprintf(csv, ",%d,%d,%d,%d,%d,%d,%d,%d,%d",
+                score_total[p], score_trees[p], score_mountains[p], score_fields[p], score_buildings[p],
+                score_water[p], score_animals[p], score_spirit[p], score_tiebreak[p]);
+            for (int t = 1; t <= 12; ++t) {
+                fprintf(csv, ",%d", token_counts[p][t]);
+            }
+            for (int a = 0; a < TOTAL_ANIMAL_COUNT; ++a) {
+                fprintf(csv, ",%d,%d,%d", used[p][a], completed[p][a], face_score[p][a]);
+            }
+        }
+        fputc('\n', csv);
+        fflush(csv);
+    }
+
+    fclose(csv);
+    printf("Batch completed: %d games -> %s\n", games, csv_path);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
+    if (argc > 1 && strcmp(argv[1], "--help") == 0) {
+        print_usage(argv[0]);
+        return 0;
+    }
+
+    if (argc > 2 && strcmp(argv[1], "--ai-batch") == 0) {
+        int games = atoi(argv[2]);
+        uint32_t seed = (uint32_t)time(NULL);
+        int num_players = 2;
+        int board_variant = 0;
+        int use_spirits_flag = 0;
+        int use_dlc_flag = 0;
+        const char *csv_path = "ai_batch_results.csv";
+
+        for (int i = 3; i < argc; ++i) {
+            if (strcmp(argv[i], "--seed") == 0 && i + 1 < argc) {
+                seed = (uint32_t)strtoul(argv[++i], NULL, 10);
+            } else if (strcmp(argv[i], "--players") == 0 && i + 1 < argc) {
+                num_players = atoi(argv[++i]);
+            } else if (strcmp(argv[i], "--board") == 0 && i + 1 < argc) {
+                board_variant = atoi(argv[++i]);
+            } else if (strcmp(argv[i], "--spirits") == 0 && i + 1 < argc) {
+                use_spirits_flag = atoi(argv[++i]);
+            } else if (strcmp(argv[i], "--dlc") == 0 && i + 1 < argc) {
+                use_dlc_flag = atoi(argv[++i]);
+            } else if (strcmp(argv[i], "--csv") == 0 && i + 1 < argc) {
+                csv_path = argv[++i];
+            } else {
+                fprintf(stderr, "unknown argument: %s\n", argv[i]);
+                print_usage(argv[0]);
+                return 1;
+            }
+        }
+
+        return run_ai_batch(games, seed, num_players, board_variant, use_spirits_flag, use_dlc_flag, csv_path);
+    }
+
     uint32_t seed = time(NULL);
-    int board_variant = 0, use_spirits_flag = 0;
+    int board_variant = 0, use_spirits_flag = 0, use_dlc_flag = 0;
     if (argc > 1) {
         seed = (uint32_t)strtoul(argv[1], NULL, 10);
     }
@@ -992,10 +1351,12 @@ int main(int argc, char **argv)
     if (argc > 3) {
         use_spirits_flag = atoi(argv[3]);
     }
+    if (argc > 4) {
+        use_dlc_flag = atoi(argv[4]);
+    }
+    wasm_set_use_dlc(use_dlc_flag);
     wasm_init_game(seed, 2, board_variant, use_spirits_flag);
     print_state(&global_state);
-
-    uint16_t out_actions[MAX_ACTIONS];
 
     for (int itr = 0; itr < 1000; ++itr) {
         int player_idx = wasm_get_state()->round % player_count;

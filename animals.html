@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmonies Animals</title>
+    <style>
+        :root {
+            --page-bg: #f0f3f7;
+            --panel-bg: #ffffff;
+            --card-bg: #ffffff;
+            --text-color: #222222;
+            --muted-text: #666666;
+            --border-color: #dddddd;
+            --shadow-color: rgba(0,0,0,0.08);
+            --badge-color: #f5f5f5;
+        }
+        body[data-theme='dark'] {
+            --page-bg: #13161b;
+            --panel-bg: #1c2129;
+            --card-bg: #222a33;
+            --text-color: #e8eef5;
+            --muted-text: #c3d0df;
+            --border-color: #3a4552;
+            --shadow-color: rgba(0,0,0,0.35);
+            --badge-color: #3a4552;
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--page-bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            border-radius: 12px;
+            padding: 12px 16px 20px 16px;
+        }
+        .theme-toggle-wrap {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 8px;
+        }
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 10px;
+        }
+        h1 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .search-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .filter-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .dlc-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+        .filter-select {
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 13px;
+        }
+        .filter-label {
+            font-size: 13px;
+            color: var(--muted-text);
+            margin-right: 4px;
+        }
+        .search-input {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 300px;
+            max-width: 90%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: #4CAF50;
+        }
+        .search-hint {
+            font-size: 14px;
+            color: var(--muted-text);
+            margin-top: 5px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .animal-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 18px var(--shadow-color);
+            padding: 14px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .animal-card h2 {
+            margin: 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .animal-card .animal-index {
+            font-size: 14px;
+            color: var(--muted-text);
+        }
+        .animal-env {
+            position: relative;
+            width: 110px;
+            height: 50px;
+            margin: 0 auto;
+        }
+        .animal-env-options {
+            display: flex;
+            gap: 0;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .animal-env-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+        .animal-env-option-label {
+            font-size: 11px;
+            color: var(--muted-text);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .env-token {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1px solid #999;
+            font-size: 12px;
+            color: #111;
+        }
+        .env-token.empty {
+            background: transparent;
+            border-style: dashed;
+        }
+        .paw {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            background: orange;
+            border: 1px solid darkorange;
+        }
+        .paw.spirit {
+            background: #fff;
+            border-color: #ccc;
+        }
+        .animal-scores {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+        .animal-score-badge {
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: var(--badge-color);
+            border: 1px solid #ddd;
+            font-size: 12px;
+            min-width: 20px;
+            text-align: center;
+        }
+        .animal-score-badge.active {
+            background: #ffebcd;
+            border-color: #ffb74d;
+        }
+        .spirit-animal-score-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .token-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #111;
+            border: 1px solid #999;
+        }
+        .empty-token {
+            opacity: 0.2;
+            border-style: dashed;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--muted-text);
+        }
+        .token-circle.empty-slot {
+            opacity: 0;
+        }
+        .token-circle.river {
+            background: #4fc3f7;
+            border-color: #0277bd;
+        }
+        .token-circle.plains {
+            background: #fff176;
+            border-color: #f9a825;
+        }
+        .token-circle.wood {
+            background: #a1887f;
+            border-color: #5d4037;
+        }
+        .token-circle.mountain {
+            background: #90a4ae;
+            border-color: #455a64;
+        }
+        .token-circle.tree {
+            background: #81c784;
+            border-color: #2e7d32;
+        }
+        .token-circle.building {
+            background: #e57373;
+            border-color: #c62828;
+        }
+        .token-circle.finished-building {
+            background: #ef5350;
+            border-color: #b71c1c;
+        }
+        .token-circle.mountain-2x {
+            background: #78909c;
+            border-color: #37474f;
+        }
+        .token-circle.mountain-3x {
+            background: #607d8b;
+            border-color: #263238;
+        }
+        .token-circle.tree-2x {
+            background: #66bb6a;
+            border-color: #1b5e20;
+        }
+        .token-circle.tree-3x {
+            background: #4caf50;
+            border-color: #1b5e20;
+        }
+        .token-circle.wood-2x {
+            background: #8d6e63;
+            border-color: #4e342e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="theme-toggle-wrap">
+            <label class="theme-toggle" for="theme-toggle">
+                <input type="checkbox" id="theme-toggle">
+                Dark mode
+            </label>
+        </div>
+        <h1 id="page-title">Harmonies Animals</h1>
+        <div class="search-container">
+            <div class="filter-row">
+                <label class="dlc-toggle" for="show-dlc">
+                    <input type="checkbox" id="show-dlc" checked>
+                    Show Pulse DLC cards
+                </label>
+                <label class="dlc-toggle" for="animal-terrain-filter">
+                    <span class="filter-label">Animal terrain</span>
+                    <select id="animal-terrain-filter" class="filter-select">
+                        <option value="all" selected>All</option>
+                        <option value="river">River</option>
+                        <option value="plains">Plains</option>
+                        <option value="wood">Wood</option>
+                        <option value="mountain">Mountain</option>
+                        <option value="tree">Tree</option>
+                        <option value="building">Building</option>
+                    </select>
+                </label>
+            </div>
+            <div class="filter-row" id="composition-terrain-filter">
+                <span class="filter-label">Terrains</span>
+                <label class="dlc-toggle"><input type="checkbox" class="composition-terrain" value="river">River</label>
+                <label class="dlc-toggle"><input type="checkbox" class="composition-terrain" value="plains">Plains</label>
+                <label class="dlc-toggle"><input type="checkbox" class="composition-terrain" value="wood">Wood</label>
+                <label class="dlc-toggle"><input type="checkbox" class="composition-terrain" value="mountain">Mountain</label>
+                <label class="dlc-toggle"><input type="checkbox" class="composition-terrain" value="tree">Tree</label>
+                <label class="dlc-toggle"><input type="checkbox" class="composition-terrain" value="building">Building</label>
+            </div>
+            <input type="text" id="search-input" class="search-input" placeholder="Filter animals (e.g., 1-3, 5, 8-10)">
+        </div>
+        <div id="loading" class="empty-state">Loading WASM module...</div>
+        <div id="animal-grid" class="grid" style="display:none;"></div>
+    </div>
+
+    <script src="harminies.js"></script>
+    <script src="harminies-wrapper.js"></script>
+    <script>
+        function applyTheme(theme) {
+            document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle) toggle.checked = theme === 'dark';
+            try {
+                localStorage.setItem('harminis_theme', theme);
+            } catch (e) {
+                console.error('Failed to save theme:', e);
+            }
+        }
+
+        function initTheme() {
+            let theme = 'light';
+            try {
+                const saved = localStorage.getItem('harminis_theme');
+                if (saved === 'dark' || saved === 'light') {
+                    theme = saved;
+                }
+            } catch (e) {
+                console.error('Failed to load theme:', e);
+            }
+            applyTheme(theme);
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle) {
+                toggle.addEventListener('change', () => {
+                    applyTheme(toggle.checked ? 'dark' : 'light');
+                });
+            }
+        }
+
+        const animalsName = [
+            "Crocodile",
+            "Ray",
+            "Salmon",
+            "Otter",
+            "Frog",
+            "Duck",
+            "Flamingo",
+            "Gecko",
+            "Shrew",
+            "Peacock",
+            "Squirrel",
+            "Hedgehog",
+            "Bee",
+            "Bear",
+            "Rabbit",
+            "Macaw",
+            "Boar",
+            "Koala",
+            "Wolf",
+            "Kingfisher",
+            "Penguin",
+            "Bat",
+            "Fennec",
+            "Macaque",
+            "Bateleur",
+            "Meerkat",
+            "Raven",
+            "Alpaca",
+            "ArcticFox",
+            "Raccoon",
+            "Ladybug",
+            "Panther",
+            "Lion",
+            "Butterfly",
+            "Elk",
+            "Owl",
+            "Cat",
+            "Stork",
+            "Goat",
+            "Beaver",
+            "Dragonfly",
+            "Tortoise",
+            "T-Rex",
+            "Piranha",
+            "Axolotl",
+            "Robin",
+            "Seagull",
+            "Tiger",
+            "Chameleon",
+            "Camel",
+            "Yak",
+            "Panda",
+            "Beetle"
+        ];
+
+        const BASE_ANIMAL_COUNT = 42;
+
+        const tokenClasses = [
+            'empty', 'river', 'plains', 'wood', 'mountain', 'tree', 'building', 'finished-building',
+            'mountain-2x', 'mountain-3x', 'tree-2x', 'tree-3x', 'wood-2x'
+        ];
+
+        const tokenSymbols = ['', '1', '1', '1', '1', '1', '1', '2', '2', '3', '2', '3', '2'];
+        const tokenToTerrain = {
+            1: 'river',
+            2: 'plains',
+            3: 'wood',
+            4: 'mountain',
+            5: 'tree',
+            6: 'building',
+            7: 'building',
+            8: 'mountain',
+            9: 'mountain',
+            10: 'tree',
+            11: 'tree',
+            12: 'wood',
+        };
+
+        function getTerrainFromToken(token) {
+            return tokenToTerrain[token] || 'unknown';
+        }
+
+        function getCompositionTerrains(animalInfo) {
+            const set = new Set();
+            set.add(getTerrainFromToken(animalInfo.token));
+            animalInfo.env.forEach(item => {
+                set.add(getTerrainFromToken(item.token));
+            });
+            return Array.from(set);
+        }
+
+        function envPositionXY(pos) {
+            return {
+                x: pos % 4 * 20,
+                y: (pos > 3 ? 22 : 0) + (pos % 4) * 11
+            };
+        }
+
+        function createEnvDiagram(animalInfo, variantIndex = 0) {
+            const envContainer = document.createElement('div');
+            envContainer.className = 'animal-env';
+
+            const envMap = { 2: { tokenType: animalInfo.token, x: 40, y: 22 } };
+            animalInfo.env.forEach(item => {
+                const pos = item.positions[variantIndex];
+                const xy = envPositionXY(pos);
+                envMap[pos] = {
+                    tokenType: item.token,
+                    x: xy.x,
+                    y: xy.y
+                };
+            });
+
+            const positions = Object.keys(envMap).map(Number);
+            const minX = Math.min(...positions.map(pos => envMap[pos].x));
+            const minY = Math.min(...positions.map(pos => envMap[pos].y));
+            const maxX = Math.max(...positions.map(pos => envMap[pos].x));
+            const maxY = Math.max(...positions.map(pos => envMap[pos].y));
+            const offsetX = -minX + (110 - (maxX - minX + 20)) / 2;
+            const offsetY = -minY + (50 - (maxY - minY + 20)) / 2;
+
+            positions.forEach(pos => {
+                const item = envMap[pos];
+                const circle = document.createElement('div');
+                circle.className = 'env-token ' + (item.tokenType !== undefined ? 'token-circle ' + tokenClasses[item.tokenType] : 'empty');
+                circle.style.left = (item.x + offsetX) + 'px';
+                circle.style.top = (item.y + offsetY) + 'px';
+                circle.textContent = item.tokenType !== undefined ? tokenSymbols[item.tokenType] : '';
+
+                if (pos === 2) {
+                    const paw = document.createElement('span');
+                    paw.className = 'paw';
+                    circle.appendChild(paw);
+                }
+                envContainer.appendChild(circle);
+            });
+
+            return envContainer;
+        }
+
+        function createTokenDot(tokenType) {
+            const dot = document.createElement('span');
+            dot.className = 'token-circle ' + (tokenType === undefined ? 'empty-token' : tokenClasses[tokenType]);
+            dot.textContent = tokenType === undefined ? '' : tokenSymbols[tokenType] || '';
+            dot.title = tokenType === undefined ? 'Empty' : tokenClasses[tokenType];
+            dot.style.background = tokenType === undefined ? 'transparent' : '';
+            return dot;
+        }
+
+        function createAnimalCard(index, animalInfo) {
+            const card = document.createElement('article');
+            card.className = 'animal-card';
+
+            const title = document.createElement('h2');
+            title.textContent = `${animalsName[index]}`;
+            const idxLabel = document.createElement('span');
+            idxLabel.className = 'animal-index';
+            idxLabel.textContent = `ID: ${index}`;
+            title.appendChild(idxLabel);
+            card.appendChild(title);
+
+            if (animalInfo.hasAlternativeComposition) {
+                const options = document.createElement('div');
+                options.className = 'animal-env-options';
+
+                const optionA = document.createElement('div');
+                optionA.className = 'animal-env-option';
+                const labelA = document.createElement('div');
+                labelA.className = 'animal-env-option-label';
+                labelA.textContent = 'Option A';
+                optionA.appendChild(labelA);
+                optionA.appendChild(createEnvDiagram(animalInfo, 0));
+
+                const optionB = document.createElement('div');
+                optionB.className = 'animal-env-option';
+                const labelB = document.createElement('div');
+                labelB.className = 'animal-env-option-label';
+                labelB.textContent = 'Option B';
+                optionB.appendChild(labelB);
+                optionB.appendChild(createEnvDiagram(animalInfo, 1));
+
+                options.appendChild(optionA);
+                options.appendChild(optionB);
+                card.appendChild(options);
+            } else {
+                card.appendChild(createEnvDiagram(animalInfo, 0));
+            }
+
+            const scoreRow = document.createElement('div');
+            scoreRow.className = 'animal-scores';
+
+            const spirit_badge = document.createElement('div');
+            spirit_badge.className = 'animal-score-badge spirit-animal-score-badge';
+
+            animalInfo.score.forEach(value => {
+                const badge = document.createElement('div');
+                if (value === -3) {
+                    badge.className = 'animal-score-badge';
+                    badge.textContent = '⬜🔗🟨: 2;';
+                    scoreRow.appendChild(badge);
+                } else if (typeof value === 'number') {
+                    badge.className = 'animal-score-badge';
+                    badge.textContent = value;
+                    scoreRow.appendChild(badge);
+                } else if (typeof value === 'string' && value.startsWith('$')) {
+                    const tokenType = parseInt(value.slice(1), 10);
+                    badge.appendChild(createTokenDot(Number.isNaN(tokenType) ? undefined : tokenType));
+                    badge.append(':');
+                    badge.style.minWidth = 'auto';
+                    spirit_badge.appendChild(badge);
+                } else {
+                    badge.textContent = value;
+                    badge.append(';');
+                    spirit_badge.appendChild(badge);
+                }
+            });
+
+            if (spirit_badge.children.length) {
+                scoreRow.appendChild(spirit_badge);
+            }
+
+
+            card.appendChild(scoreRow);
+
+            return card;
+        }
+
+        function parseSelection(input) {
+            if (!input.trim()) return null; // Show all if empty
+
+            const selected = new Set();
+            const parts = input.split(',').map(p => p.trim());
+
+            for (const part of parts) {
+                if (part.includes('-')) {
+                    const [start, end] = part.split('-').map(n => parseInt(n.trim(), 10));
+                    if (!isNaN(start) && !isNaN(end) && start <= end) {
+                        for (let i = start; i <= end; i++) {
+                            selected.add(i);
+                        }
+                    }
+                } else {
+                    const num = parseInt(part, 10);
+                    if (!isNaN(num)) {
+                        selected.add(num);
+                    }
+                }
+            }
+
+            return Array.from(selected).sort((a, b) => a - b);
+        }
+
+        function filterAnimals(selectedIds, selectedAnimalTerrain, selectedCompositionTerrains) {
+            const cards = document.querySelectorAll('.animal-card');
+            cards.forEach(card => {
+                const index = parseInt(card.dataset.animalId, 10);
+                const idPass = selectedIds === null || selectedIds.includes(index);
+                const animalTerrainPass = selectedAnimalTerrain === 'all' || card.dataset.animalTerrain === selectedAnimalTerrain;
+                const compositionSet = new Set((card.dataset.compositionTerrains || '').split(',').filter(Boolean));
+                const compositionPass = selectedCompositionTerrains.every(t => compositionSet.has(t));
+
+                if (idPass && animalTerrainPass && compositionPass) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function applyAllFilters() {
+            const selectedIds = parseSelection(document.getElementById('search-input').value);
+            const selectedAnimalTerrain = document.getElementById('animal-terrain-filter').value;
+            const selectedCompositionTerrains = Array.from(document.querySelectorAll('.composition-terrain:checked')).map(el => el.value);
+            filterAnimals(selectedIds, selectedAnimalTerrain, selectedCompositionTerrains);
+        }
+
+        function updateTitle(total) {
+            document.getElementById('page-title').textContent = `Harmonies Animals (${total})`;
+        }
+
+        function renderAnimals(grid, game, showDlc) {
+            const totalCount = showDlc ? game.getAnimalCount() : BASE_ANIMAL_COUNT;
+            grid.innerHTML = '';
+            for (let i = 0; i < totalCount; i++) {
+                const animalInfo = game.getAnimal(i);
+                if (animalInfo) {
+                    const card = createAnimalCard(i, animalInfo);
+                    card.dataset.animalId = i.toString();
+                    card.dataset.animalTerrain = getTerrainFromToken(animalInfo.token);
+                    card.dataset.compositionTerrains = getCompositionTerrains(animalInfo).join(',');
+                    grid.appendChild(card);
+                }
+            }
+            updateTitle(totalCount);
+        }
+
+        async function initPage() {
+            try {
+                const module = await HarminiesModule();
+                const game = new HarminiesGame(module);
+                const grid = document.getElementById('animal-grid');
+                const loading = document.getElementById('loading');
+                const searchInput = document.getElementById('search-input');
+                const showDlcInput = document.getElementById('show-dlc');
+                const animalTerrainFilter = document.getElementById('animal-terrain-filter');
+                const compositionTerrainInputs = document.querySelectorAll('.composition-terrain');
+
+                // const savedDlc = localStorage.getItem('harminis_setup_usedlc');
+                showDlcInput.checked = true; // savedDlc === '1';
+
+                loading.style.display = 'none';
+                grid.style.display = 'grid';
+
+                renderAnimals(grid, game, showDlcInput.checked);
+
+                // Add search functionality
+                searchInput.addEventListener('input', () => {
+                    applyAllFilters();
+                });
+
+                animalTerrainFilter.addEventListener('change', () => {
+                    applyAllFilters();
+                });
+
+                compositionTerrainInputs.forEach(input => {
+                    input.addEventListener('change', () => {
+                        applyAllFilters();
+                    });
+                });
+
+                showDlcInput.addEventListener('change', () => {
+                    renderAnimals(grid, game, showDlcInput.checked);
+                    applyAllFilters();
+                });
+
+                applyAllFilters();
+
+            } catch (error) {
+                document.getElementById('loading').textContent = 'Failed to load animals: ' + error.message;
+                console.error(error);
+            }
+        }
+
+        initTheme();
+        initPage();
+    </script>
+</body>
+</html>

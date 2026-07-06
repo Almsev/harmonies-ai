@@ -24,7 +24,7 @@ emcmake cmake ..
 
 # Build
 echo "Building..."
-emmake make
+emmake ninja
 
 # Copy output files to parent directory for web serving
 echo "Copying output files..."

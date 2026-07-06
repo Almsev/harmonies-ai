@@ -5,23 +5,73 @@
     <meta name="viewport" content="min-width=560, initial-scale=0.66">
     <title>Harminis AI</title>
     <style>
+        :root {
+            --page-bg: #f5f5f5;
+            --panel-bg: #ffffff;
+            --surface-bg: #f9f9f9;
+            --section-bg: #f5f5f5;
+            --text-color: #222222;
+            --muted-text: #555555;
+            --border-color: #dddddd;
+            --table-head-bg: #f5f5f5;
+            --overlay-bg: rgba(0, 0, 0, 0.7);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --active-bg: #fff3e0;
+            --empty-bg: white;
+        }
+        body[data-theme='dark'] {
+            --page-bg: #13161b;
+            --panel-bg: #1c2129;
+            --surface-bg: #222a33;
+            --section-bg: #232b35;
+            --text-color: #e8eef5;
+            --muted-text: #c3d0df;
+            --border-color: #3a4552;
+            --table-head-bg: #2a333f;
+            --overlay-bg: rgba(0, 0, 0, 0.82);
+            --shadow-color: rgba(0, 0, 0, 0.35);
+            --active-bg: #231f18;
+            --empty-bg: #232b35;
+        }
+        a {
+            color: orange; 
+        }
         @font-face {
             font-family: Xilosa;
             src: url('xilosa_.ttf');
         }
         body {
-            font-family: Xilosa, Arial, Helvetica, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
+            padding: 0;
+            background: var(--page-bg);
+            color: var(--text-color);
             user-select: none;
         }
         .container {
-            background: white;
+            background: var(--panel-bg);
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+        .theme-toggle-wrap {
+            display: flex;
+            justify-content: flex-end;
+            margin: 10px;
+            align-items: center;
+            gap: 10px;
+        }
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            background: var(--surface-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 10px;
         }
         .controls {
             margin: 0;
@@ -68,7 +118,7 @@
             flex-wrap: wrap;
             margin: 0;
             padding: 10px;
-            background: #f9f9f9;
+            background: var(--surface-bg);
             border-radius: 4px;
         }
         .player-animals {
@@ -81,11 +131,12 @@
             position: relative;
             display: inline-block;
             border-radius: 6px;
-            background-color: #fff;
+            background-color: var(--panel-bg);
             width: 110px;
+            padding: 5px 0;
         }
         .player-section {
-            background: #f5f5f5;
+            background: var(--section-bg);
             padding: 15px;
             margin: 15px 0;
             border-radius: 8px;
@@ -93,7 +144,7 @@
         }
         .player-section.current-player {
             border-left-color: #FF9800;
-            background: #fff3e0;
+            background: var(--active-bg);
         }
         .player-header {
             margin-top: 0px;
@@ -145,14 +196,14 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 5px;
         }
         .hex-board {
             display: block;
             position: relative;
             margin: 0;
             padding: 0;
-            background: #e8e8e8;
+            background: var(--page-bg);
             border-radius: 8px;
         }
         .hex-cell {
@@ -168,7 +219,7 @@
             clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
         }
         .hex-cell.empty {
-            background: #f5f5f5;
+            background: var(--empty-bg);
             border-color: #ccc;
         }
         .hex-cell.river {
@@ -261,7 +312,7 @@
         }
         .supply-section {
             display: flex;
-            gap: 30px;
+            gap: 10px;
             flex-wrap: wrap;
             margin: 20px 0;
             align-items: flex-start;
@@ -274,16 +325,16 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            padding: 10px;
-            background: #f9f9f9;
+            padding: 5px;
+            background: var(--surface-bg);
             border-radius: 4px;
         }
         .token-supply {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            padding: 10px;
-            background: #f9f9f9;
+            gap: 5px;
+            padding: 5px;
+            background: var(--surface-bg);
             border-radius: 4px;
         }
         .token-group {
@@ -292,14 +343,14 @@
             gap: 5px;
             align-items: center;
             padding: 8px;
-            background: white;
+            background: var(--panel-bg);
             border-radius: 6px;
-            border: 1.5px solid #ddd;
+            border: 1.5px solid var(--border-color);
             transition: all 0.2s ease;
         }
         .token-group.chosen {
             border-color: #FF9800;
-            background: #fff3e0;
+            background: var(--active-bg);
             box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
         }
         .token-group.clickable {
@@ -476,8 +527,8 @@
             padding: 4px 2px;
             border-radius: 6px;
             font-size: 12px;
-            background: #f5f5f5;
-            border: 1px solid #ddd;
+            background: var(--surface-bg);
+            border: 1px solid var(--border-color);
             min-width: 10px;
             text-align: center;
         }
@@ -495,15 +546,15 @@
             gap: 30px;
         }
         .setup-form {
-            background: #f9f9f9;
+            background: var(--surface-bg);
             padding: 30px;
             border-radius: 8px;
             border: 2px solid #4CAF50;
-            min-width: 400px;
+            min-width: 300px;
         }
         .setup-form h2 {
             margin-top: 0;
-            color: #333;
+            color: var(--text-color);
             text-align: center;
         }
         .form-group {
@@ -512,14 +563,16 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #555;
+            color: var(--muted-text);
         }
         .form-group input,
         .form-group select {
             width: 100%;
             padding: 12px;
             font-size: 14px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            background: var(--panel-bg);
             border-radius: 4px;
             box-sizing: border-box;
             font-family: inherit;
@@ -544,14 +597,14 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: var(--overlay-bg);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
         }
         .endgame-popup {
-            background: white;
+            background: var(--panel-bg);
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -561,7 +614,7 @@
         .endgame-popup h2 {
             margin-top: 0;
             margin-bottom: 20px;
-            color: #333;
+            color: var(--text-color);
             text-align: center;
             font-size: 24px;
         }
@@ -574,12 +627,12 @@
             padding: 10px;
             text-align: center;
             border-bottom: 2px solid #333;
-            background: #f5f5f5;
+            background: var(--table-head-bg);
         }
         .endgame-table td {
             padding: 10px;
             text-align: center;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid var(--border-color);
         }
         .endgame-table tr:last-child td {
             border-bottom: 2px solid #333;
@@ -587,10 +640,10 @@
         }
         .endgame-table .component-name {
             text-align: left;
-            color: #000;
+            color: var(--text-color);
         }
         .endgame-table .total {
-            background: #f5f5f5;
+            background: var(--table-head-bg);
         }
         .winner-crown {
             font-family: emoji;
@@ -605,7 +658,7 @@
     </style>
 </head>
 <body>
-    <div class="container">        
+    <div class="container">
         <div id="loading" class="loading">
             <p>Loading WASM module...</p>
         </div>
@@ -636,13 +689,38 @@
                     <div class="form-group">
                         <label for="setup-use-spirits">Use spirits</label>
                         <select id="setup-use-spirits">
-                            <option value="1" selected>Yes</option>
                             <option value="0">No</option>
+                            <option value="1" selected>Yes</option>
+                            <option value="2">Yes &amp; with T-Rex</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="setup-use-dlc">Enable Pulse DLC</label>
+                        <select id="setup-use-dlc">
+                            <option value="0" selected>No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="setup-ai-speed">Bot thinking speed</label>
+                        <select id="setup-ai-speed">
+                            <option value="0">Quick</option>
+                            <option value="1">Normal</option>
+                            <option value="2" selected>Slow</option>
+                            <option value="3">Ultra Slow</option>
+                            <option value="4">Insanely Slow</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="setup-all-bot">All bot mode</label>
+                        <select id="setup-all-bot">
+                            <option value="0" selected>No</option>
+                            <option value="1">Yes</option>
                         </select>
                     </div>
                     <div class="setup-buttons">
-                        <button id="start-new-game">Start new game</button>
-                        <button id="back-to-board" class="secondary">Back to board</button>
+                        <button id="start-new-game">Start</button>
+                        <button id="back-to-board" class="secondary">Back</button>
                     </div>
                 </div>
             </div>
@@ -670,12 +748,56 @@
         </div>
         
         <div id="error" style="display: none;" class="error"></div>
+
+                
+        <div class="theme-toggle-wrap">
+            <span class="theme-toggle">
+                <a href="./animals.html" target="_blank">Animals List</a>
+            </span>
+            <label class="theme-toggle" for="theme-toggle">
+                <input type="checkbox" id="theme-toggle">
+                Dark mode
+            </label>
+            <span>
+                Thanks: <a href="https://github.com/nutki/harmonies-ai" target="_blank">nutki</a>
+            </span>
+        </div>
     </div>
 
     <script src="harminies.js"></script>
     <script src="harminies-wrapper.js"></script>
     <script>
         let game;
+
+        function applyTheme(theme) {
+            document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle) toggle.checked = theme === 'dark';
+            try {
+                localStorage.setItem('harminis_theme', theme);
+            } catch (e) {
+                console.error('Failed to save theme:', e);
+            }
+        }
+
+        function initTheme() {
+            let theme = 'light';
+            try {
+                const saved = localStorage.getItem('harminis_theme');
+                if (saved === 'dark' || saved === 'light') {
+                    theme = saved;
+                }
+            } catch (e) {
+                console.error('Failed to load theme:', e);
+            }
+            applyTheme(theme);
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle) {
+                toggle.addEventListener('change', () => {
+                    applyTheme(toggle.checked ? 'dark' : 'light');
+                });
+            }
+        }
         
         // UI state for two-step token placement
         let selectedTokenInfo = null; // { tokenIndex, availableActions }
@@ -702,18 +824,18 @@
         
         const tokenSymbols = [
             '',    // 0 empty
-            '川',  // 1 river
-            '田',  // 2 plains
-            '材',  // 3 wood
-            '山',  // 4 mountain
-            '木',  // 5 tree
-            '石',  // 6 building
-            '館',  // 7 finished building
-            '屾',  // 8 2x mountain
-            '嶽',  // 9 3x mountain
-            '林',  // 10 2x tree
-            '森',  // 11 3x tree
-            '板'   // 12 2x wood
+            '1',  // 1 river
+            '1',  // 2 plains
+            '1',  // 3 wood
+            '1',  // 4 mountain
+            '1',  // 5 tree
+            '1',  // 6 building
+            '2',  // 7 finished building
+            '2',  // 8 2x mountain
+            '3',  // 9 3x mountain
+            '2',  // 10 2x tree
+            '3',  // 11 3x tree
+            '2'   // 12 2x wood
         ];
         
         function createHexBoard(board, clickableCells = null, playerIdx = null) {
@@ -772,8 +894,8 @@
             const tokensChosen = (roundState & 0x08) !== 0;
             const chosenGroup = roundState & 0x07; // lowest 3 bits
             
-            // Only allow interaction for player 0
-            const allowInteraction = (currentPlayer === 0);
+            // Only allow interaction for the human turn
+            const allowInteraction = isHumanTurn(currentPlayer);
             
             // Find CHOOSE_TOKENS actions
             const chooseTokenActions = availableActions.filter(action => {
@@ -872,12 +994,15 @@
             }
         }
         
-        function saveSetupInputs(seed, playerCount, boardVariant, useSpirits) {
+        function saveSetupInputs(seed, playerCount, boardVariant, useSpirits, useDlc, aiSpeed, allBotMode) {
             try {
                 localStorage.setItem('harminis_setup_seed', seed.toString());
                 localStorage.setItem('harminis_setup_playercount', playerCount.toString());
                 localStorage.setItem('harminis_setup_boardvariant', boardVariant.toString());
                 localStorage.setItem('harminis_setup_usespirits', useSpirits.toString());
+                localStorage.setItem('harminis_setup_usedlc', useDlc.toString());
+                localStorage.setItem('harminis_setup_aispeed', aiSpeed.toString());
+                localStorage.setItem('harminis_setup_allbot', allBotMode.toString());
             } catch (e) {
                 console.error('Failed to save setup inputs:', e);
             }
@@ -889,6 +1014,9 @@
                 const playerCount = localStorage.getItem('harminis_setup_playercount');
                 const boardVariant = localStorage.getItem('harminis_setup_boardvariant');
                 const useSpirits = localStorage.getItem('harminis_setup_usespirits');
+                const useDlc = localStorage.getItem('harminis_setup_usedlc');
+                const aiSpeed = localStorage.getItem('harminis_setup_aispeed');
+                const allBotMode = localStorage.getItem('harminis_setup_allbot');
                 
                 if (seed) {
                     document.getElementById('setup-seed').value = seed;
@@ -901,6 +1029,15 @@
                 }
                 if (useSpirits !== null) {
                     document.getElementById('setup-use-spirits').value = useSpirits;
+                }
+                if (useDlc !== null) {
+                    document.getElementById('setup-use-dlc').value = useDlc;
+                }
+                if (aiSpeed !== null) {
+                    document.getElementById('setup-ai-speed').value = aiSpeed;
+                }
+                if (allBotMode !== null) {
+                    document.getElementById('setup-all-bot').value = allBotMode;
                 }
             } catch (e) {
                 console.error('Failed to load setup inputs:', e);
@@ -917,6 +1054,19 @@
             document.getElementById('app-setup').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             saveUIState('game');
+        }
+
+        function isHumanTurn(currentPlayer) {
+            return !game.allBotMode && currentPlayer === 0;
+        }
+
+        function scheduleAutoMoveIfNeeded(currentPlayer, actions) {
+            if (game.isGameFinished()) return;
+            if (isHumanTurn(currentPlayer)) return;
+            if (actions.length <= 0) return;
+            setTimeout(() => {
+                aiMove();
+            }, game.allBotMode ? 120 : 500);
         }
         
         async function initWasm() {
@@ -995,10 +1145,10 @@
             
             // Create a map of positions to tokens
             const envMap = { 2: {tokenType: animalToken, x: 40, y: 22 } };
-            animalEnv.forEach(item => envMap[item.pos] = {
+            animalEnv.forEach(item => envMap[item.positions[0]] = {
                 tokenType: item.token,
-                x: item.pos % 4 * 20,
-                y: (item.pos > 3 ? 22 : 0) + item.pos % 4 * 11,
+                x: item.positions[0] % 4 * 20,
+                y: (item.positions[0] > 3 ? 22 : 0) + item.positions[0] % 4 * 11,
             });
             const minX = Math.min(...Object.values(envMap).map(e => e.x));
             const minY = Math.min(...Object.values(envMap).map(e => e.y));
@@ -1021,11 +1171,11 @@
                 circle.textContent = tokenSymbols[tokenType];
                 
                 // Add animal paw for center position
-                if (pos === 2) {
+                    if (pos === 2) {
                     circle.style.position = 'relative';
                     const paw = document.createElement('span');
                     paw.className = 'paw';
-                    if (animalId >= 32) paw.classList.add('spirit');
+                        if (game.isSpiritAnimal(animalId)) paw.classList.add('spirit');
                     circle.appendChild(paw);
                 }
                 
@@ -1043,6 +1193,7 @@
                 if (progress) badge.classList.add('active');
 
                 scores.forEach((s) => {
+                    console.log(s, 's');
                     if (s.startsWith('$')) {
                         const num = parseInt(s.slice(1), 10);
                         if (!Number.isNaN(num) && num >= 0 && num < tokenClasses.length) {
@@ -1071,6 +1222,10 @@
                 const scoresRow = document.createElement('div');
                 scoresRow.className = 'animal-scores';
                 scores.forEach((s, i) => {
+                    if (s == -3) {
+                        s = '⬜🔗🟨: 2';
+                    }
+                    
                     const badge = document.createElement('div');
                     badge.className = 'animal-score-badge';
                     badge.textContent = s;
@@ -1104,7 +1259,7 @@
                 animalSupplyDiv.innerHTML = '';
                 state.animals.forEach((animalId, idx) => {
                     if (animalId !== null && animalId >= 0) {
-                        const actionForThisAnimal = (currentPlayer === 0) ? chooseAnimalActions.find(action => {
+                        const actionForThisAnimal = isHumanTurn(currentPlayer) ? chooseAnimalActions.find(action => {
                             const params = action & 0xFF;
                             return params === idx;
                         }) : null;
@@ -1174,10 +1329,10 @@
                     animalsDiv.className = 'player-animals';
                     
                     // Filter PLACE_ANIMAL actions for this player (only current player can place, and only for player 0)
-                    const placeAnimalActions = (idx === currentPlayer && currentPlayer === 0) 
+                    const placeAnimalActions = (idx === currentPlayer && isHumanTurn(currentPlayer)) 
                         ? actions.filter(action => (action >> 8) === 4) // ACTION_PLACE_ANIMAL = 4
                         : [];
-                    const selectSpiritActions = (idx === currentPlayer && currentPlayer === 0) 
+                    const selectSpiritActions = (idx === currentPlayer && isHumanTurn(currentPlayer)) 
                         ? actions.filter(action => (action >> 8) === 6) // ACTION_SELECT_SPIRIT = 6
                         : [];
                     const playerAnimals = game.getPlayerAnimals(idx).map(animalId => ({ animalId, slotIdx: player.animals.findIndex(a => a?.id === animalId) }));
@@ -1271,7 +1426,7 @@
                 // Update End Turn button state
                 const endTurnButton = document.getElementById('end-turn');
                 const endRoundAction = actions.find(action => (action >> 8) === 5); // ACTION_END_ROUND = 5
-                endTurnButton.disabled = !endRoundAction || currentPlayer !== 0;
+                endTurnButton.disabled = !endRoundAction || !isHumanTurn(currentPlayer);
                 
                 // Highlight End Turn button if it's the only action available
                 const isOnlyAction = (actions.length === 1 && endRoundAction);
@@ -1283,7 +1438,7 @@
                 
                 // Update Undo button state
                 const undoButton = document.getElementById('undo');
-                undoButton.disabled = !game.canUndo() || currentPlayer !== 0;
+                undoButton.disabled = !game.canUndo() || !isHumanTurn(currentPlayer);
                 
                 // Update Score button visibility
                 const scoreButton = document.getElementById('show-score');
@@ -1293,12 +1448,8 @@
                     scoreButton.style.display = 'none';
                 }
                 
-                // Auto-play AI moves for non-zero players
-                if (currentPlayer !== 0 && actions.length > 0) {
-                    setTimeout(() => {
-                        aiMove();
-                    }, 500); // Small delay for visual feedback
-                }
+                // Auto-play AI moves for bot turns (or all turns in all-bot mode)
+                scheduleAutoMoveIfNeeded(currentPlayer, actions);
                 
             } catch (error) {
                 showError('Error updating display: ' + error.message);
@@ -1329,19 +1480,25 @@
             const playerCountInput = document.getElementById('setup-player-count');
             const boardVariantInput = document.getElementById('setup-board-variant');
             const useSpiritsInput = document.getElementById('setup-use-spirits');
+            const useDlcInput = document.getElementById('setup-use-dlc');
+            const aiSpeedInput = document.getElementById('setup-ai-speed');
+            const allBotModeInput = document.getElementById('setup-all-bot');
             
             const seed = seedInput.value ? parseInt(seedInput.value) : Date.now();
             const playerCount = parseInt(playerCountInput.value) || 2;
             const boardVariant = parseInt(boardVariantInput.value) || 0;
             const useSpirits = parseInt(useSpiritsInput.value);
+            const useDlc = parseInt(useDlcInput.value);
+            const aiSpeed = parseInt(aiSpeedInput.value);
+            const allBotMode = parseInt(allBotModeInput.value);
             
             // Save the inputs to localStorage
-            saveSetupInputs(parseInt(seedInput.value), playerCount, boardVariant, useSpirits);
+            saveSetupInputs(parseInt(seedInput.value), playerCount, boardVariant, useSpirits, useDlc, aiSpeed, allBotMode);
             
-            game.initGame(seed, playerCount, boardVariant, useSpirits);
+            game.initGame(seed, playerCount, boardVariant, useSpirits, useDlc, aiSpeed, allBotMode);
             showGameBoard();
             updateDisplay();
-            console.log('New game started - seed:', seed, 'players:', playerCount, 'variant:', boardVariant === 0 ? 'river' : 'islands', 'spirits:', useSpirits ? 'yes' : 'no');
+            console.log('New game started - seed:', seed, 'players:', playerCount, 'variant:', boardVariant === 0 ? 'river' : 'islands', 'spirits:', useSpirits ? 'yes' : 'no', 'pulse dlc:', useDlc ? 'yes' : 'no', 'ai speed:', aiSpeed, 'all bot:', allBotMode ? 'yes' : 'no');
         }
         
         function aiMove() {
@@ -1538,6 +1695,7 @@
         document.getElementById('undo').addEventListener('click', undoAction);
         document.getElementById('show-score').addEventListener('click', showEndgamePopup);
         
+        initTheme();
         // Initialize
         initWasm();
     </script>

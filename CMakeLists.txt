@@ -36,7 +36,7 @@ if(BUILD_WASM AND EMSCRIPTEN)
     
     target_link_options(harminies PRIVATE
         -sWASM=1
-        -sEXPORTED_FUNCTIONS=['_wasm_init_game','_wasm_get_actions','_wasm_do_action','_wasm_player_score','_wasm_get_ai_action','_wasm_get_state','_wasm_get_animal','_malloc','_free']
+        -sEXPORTED_FUNCTIONS=['_wasm_init_game','_wasm_get_actions','_wasm_do_action','_wasm_player_score','_wasm_get_ai_action','_wasm_get_state','_wasm_get_animal','_wasm_get_animal_count','_wasm_get_spirit_animal_start','_wasm_get_spirit_animal_count','_wasm_set_ai_speed','_wasm_set_use_dlc','_malloc','_free']
         -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','getValue','setValue','UTF8ToString','HEAP8','HEAP16','HEAP32','HEAPU8','HEAPU16','HEAPU32']
         -sALLOW_MEMORY_GROWTH=1
         -sMODULARIZE=1
